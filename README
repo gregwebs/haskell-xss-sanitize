@@ -1,5 +1,5 @@
 == Summary ==
-provides a function sanitizeHtmlXSS that removes XSS attacks from html.
+provides a function sanitizeXSS that removes XSS attacks from html.
 
 == Use Case ==
 All html from an untrusted source (user of a web application) should be ran through this function.
