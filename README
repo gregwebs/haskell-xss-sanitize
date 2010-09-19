@@ -1,0 +1,14 @@
+== Summary ==
+provides a function sanitizeHtmlXSS that removes XSS attacks from html.
+
+== Use Case ==
+All html from an untrusted source (user of a web application) should be ran through this function.
+If you trust the html (you wrote it), you do not need to use this.
+
+== Detail ==
+This is not escaping! Escaping html does prevents XSS attacks. Strings should be html escaped to show up properly and to prevent XSS attacks. However, escaping will ruin the display of the html.
+
+This function removes any tags or attributes that are not in its white-list of safe html. This may sound picky, but most html should make it through unchanged, giving us the best of both worlds- safe, displayable html.
+
+== Integration ==
+It is recommended to integrate this so that it is automatically used whenever an application receives user html data (instead of before it is displayed). See the Yesod web framework as an example.
