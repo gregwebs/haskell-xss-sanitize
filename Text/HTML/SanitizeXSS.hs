@@ -12,7 +12,9 @@ import Codec.Binary.UTF8.String ( encodeString, decodeString )
 import Text.HTML.TagSoup
 
 sanitizeXSS :: String -> String
-sanitizeXSS = renderTags . safeTags . parseTagsOptions parseOptions { optTagPosition = True }
+sanitizeXSS = renderTagsOptions renderOptions {
+    optMinimize = \x -> x `elem` ["br","img"]
+  } .  safeTags . parseTagsOptions parseOptions { optTagPosition = True }
   where
     safeTags :: [Tag String] -> [Tag String]
     safeTags [] = []
