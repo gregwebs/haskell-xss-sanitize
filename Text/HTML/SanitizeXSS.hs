@@ -14,7 +14,7 @@ import Text.HTML.TagSoup
 sanitizeXSS :: String -> String
 sanitizeXSS = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"]
-  } .  safeTags . parseTagsOptions parseOptions { optTagPosition = True }
+  } .  safeTags . parseTags -- Options parseOptions { optTagPosition = True }
   where
     safeTags :: [Tag String] -> [Tag String]
     safeTags [] = []
