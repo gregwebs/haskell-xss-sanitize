@@ -1,39 +1,42 @@
-module SanitizeXSS where
+module Text.HTML.SanitizeXSS where
 
-import Data.Set
+import Data.Set (Set(..), member, notMember, fromList)
 import Network.URI ( parseURIReference, URI (..) )
 
 import Data.Char ( toLower, isLower, isUpper, isAlpha, isAscii,
                    isLetter, isDigit )
 
-import Network.URI ( isAllowedInURI, escapeURIString, unEscapeString )
+import Network.URI ( isAllowedInURI, escapeURIString, unEscapeString, uriScheme )
 import Codec.Binary.UTF8.String ( encodeString, decodeString )
 
+import Text.HTML.TagSoup
 
 sanitizeXSS :: String -> String
-sanitizeXSS unsafeHtml = error
+sanitizeXSS = renderTags . safeTags . parseTagsOptions parseOptions { optTagPosition = True }
+  where
+    safeTags :: [Tag String] -> [Tag String]
+    safeTags [] = []
+    safeTags (t@(TagClose name):tags) | safeTagName name = t:(safeTags tags)
+                                      | otherwise = safeTags tags
+    safeTags (TagOpen name attributes:tags)
+      | safeTagName name = TagOpen name (filter safeAttribute attributes) : safeTags tags
+      | otherwise = safeTags tags
+    safeTags (t:tags) = t:safeTags tags
 
-unSafeTag tag = tag `notElem` sanitaryTags
-unSafeAttributes tag = (attr `notElem` sanitaryAttributes ||
-         (attr `elem` ["href","src"] && unsanitaryURI val))
+safeTagName :: String -> Bool
+safeTagName tagname = tagname `member` sanitaryTags
 
--- | Returns @True@ if the specified URI is potentially a security risk.
-unsanitaryURI :: String -> Bool
-unsanitaryURI u =
-  let safeURISchemes = [ "", "http:", "https:", "ftp:", "mailto:", "file:",
-             "telnet:", "gopher:", "aaa:", "aaas:", "acap:", "cap:", "cid:",
-             "crid:", "dav:", "dict:", "dns:", "fax:", "go:", "h323:", "im:",
-             "imap:", "ldap:", "mid:", "news:", "nfs:", "nntp:", "pop:",
-             "pres:", "sip:", "sips:", "snmp:", "tel:", "urn:", "wais:",
-             "xmpp:", "z39.50r:", "z39.50s:", "aim:", "callto:", "cvs:",
-             "ed2k:", "feed:", "fish:", "gg:", "irc:", "ircs:", "lastfm:",
-             "ldaps:", "magnet:", "mms:", "msnim:", "notes:", "rsync:",
-             "secondlife:", "skype:", "ssh:", "sftp:", "smb:", "sms:",
-             "snews:", "webcal:", "ymsgr:"]
-  in  case parseURIReference (escapeURI u) of
-           -- uriScheme member of URI record data structure
-           Just p  -> (map toLower $ uriScheme p) `notElem` safeURISchemes
-           Nothing -> True
+safeAttribute :: (String, String) -> Bool
+safeAttribute (name, value) = name `member` sanitaryAttributes &&
+  (name `notElem` ["href","src"] || sanitaryURI value)
+         
+
+-- | Returns @True@ if the specified URI is not a potential security risk.
+sanitaryURI :: String -> Bool
+sanitaryURI u =
+  case parseURIReference (escapeURI u) of
+     Just p  -> (map toLower $ uriScheme p) `member` safeURISchemes
+     Nothing -> False
 
 
 -- | Escape unicode characters in a URI.  Characters that are
@@ -49,9 +52,20 @@ unescapeURI = escapeURIString (\c -> isAllowedInURI c || not (isAscii c)) .
 
 
 
+safeURISchemes :: Set String
+safeURISchemes = fromList [ "", "http:", "https:", "ftp:", "mailto:", "file:",
+             "telnet:", "gopher:", "aaa:", "aaas:", "acap:", "cap:", "cid:",
+             "crid:", "dav:", "dict:", "dns:", "fax:", "go:", "h323:", "im:",
+             "imap:", "ldap:", "mid:", "news:", "nfs:", "nntp:", "pop:",
+             "pres:", "sip:", "sips:", "snmp:", "tel:", "urn:", "wais:",
+             "xmpp:", "z39.50r:", "z39.50s:", "aim:", "callto:", "cvs:",
+             "ed2k:", "feed:", "fish:", "gg:", "irc:", "ircs:", "lastfm:",
+             "ldaps:", "magnet:", "mms:", "msnim:", "notes:", "rsync:",
+             "secondlife:", "skype:", "ssh:", "sftp:", "smb:", "sms:",
+             "snews:", "webcal:", "ymsgr:"]
 
-sanitaryTags :: [[Char]]
-sanitaryTags = ["a", "abbr", "acronym", "address", "area", "b", "big",
+sanitaryTags :: Set String
+sanitaryTags = fromList ["a", "abbr", "acronym", "address", "area", "b", "big",
                 "blockquote", "br", "button", "caption", "center",
                 "cite", "code", "col", "colgroup", "dd", "del", "dfn",
                 "dir", "div", "dl", "dt", "em", "fieldset", "font",
@@ -63,8 +77,8 @@ sanitaryTags = ["a", "abbr", "acronym", "address", "area", "b", "big",
                 "td", "textarea", "tfoot", "th", "thead", "tr", "tt",
                 "u", "ul", "var"]
 
-sanitaryAttributes :: [[Char]]
-sanitaryAttributes = ["abbr", "accept", "accept-charset",
+sanitaryAttributes :: Set String
+sanitaryAttributes = fromList ["abbr", "accept", "accept-charset",
                       "accesskey", "action", "align", "alt", "axis",
                       "border", "cellpadding", "cellspacing", "char",
                       "charoff", "charset", "checked", "cite", "class",
