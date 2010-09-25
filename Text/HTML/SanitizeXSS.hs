@@ -1,15 +1,13 @@
 module Text.HTML.SanitizeXSS where
 
-import Data.Set (Set(..), member, notMember, fromList)
-import Network.URI ( parseURIReference, URI (..) )
-
-import Data.Char ( toLower, isLower, isUpper, isAlpha, isAscii,
-                   isLetter, isDigit )
-
-import Network.URI ( isAllowedInURI, escapeURIString, unEscapeString, uriScheme )
-import Codec.Binary.UTF8.String ( encodeString, decodeString )
-
 import Text.HTML.TagSoup
+
+import Data.Set (Set(), member, fromList)
+import Data.Char ( toLower, isAscii )
+
+import Network.URI ( parseURIReference, URI (..),
+                     isAllowedInURI, escapeURIString, unEscapeString, uriScheme )
+import Codec.Binary.UTF8.String ( encodeString, decodeString )
 
 sanitizeXSS :: String -> String
 sanitizeXSS = renderTagsOptions renderOptions {
