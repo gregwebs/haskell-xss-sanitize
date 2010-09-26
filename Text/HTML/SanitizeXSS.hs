@@ -1,17 +1,17 @@
-module Text.HTML.SanitizeXSS where
+module Text.HTML.SanitizeXSS (sanitizeXSS) where
 
 import Text.HTML.TagSoup
 
 import Data.Set (Set(), member, fromList)
-import Data.Char ( toLower, isAscii )
+import Data.Char ( toLower )
 
 import Network.URI ( parseURIReference, URI (..),
-                     isAllowedInURI, escapeURIString, unEscapeString, uriScheme )
-import Codec.Binary.UTF8.String ( encodeString, decodeString )
+                     isAllowedInURI, escapeURIString, uriScheme )
+import Codec.Binary.UTF8.String ( encodeString )
 
 sanitizeXSS :: String -> String
 sanitizeXSS = renderTagsOptions renderOptions {
-    optMinimize = \x -> x `elem` ["br","img"]
+    optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
   } .  safeTags . parseTags
   where
     safeTags :: [Tag String] -> [Tag String]
@@ -43,13 +43,6 @@ sanitaryURI u =
 -- already valid in a URI, including % and ?, are left alone.
 escapeURI :: String -> String
 escapeURI = escapeURIString isAllowedInURI . encodeString
-
--- | Unescape unicode and some special characters in a URI, but
--- without introducing spaces.
-unescapeURI :: String -> String
-unescapeURI = escapeURIString (\c -> isAllowedInURI c || not (isAscii c)) .
-               decodeString . unEscapeString
-
 
 
 safeURISchemes :: Set String

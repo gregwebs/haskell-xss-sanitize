@@ -21,7 +21,7 @@ TagSoup is used to parse the HTML, and it does a good job. However TagSoup does 
     <a   href>, <a href>
     <a></a>, <a/>
 
-img and br tags will be output as a single self-closing tags. Other self-closing tags will be output as an open and closing pair. There are future updates to TagSoup planned to fix these cases.
+img and br tags will be output as a single self-closing tags. Other self-closing tags will be output as an open and closing pair. So <img /> or <img><img> converts to <img />, and <a></a> or <a/> converts to <a></a>.  There are future updates to TagSoup planned to fix these cases.
 
 Integration
 ===========
