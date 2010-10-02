@@ -1,11 +1,11 @@
 name:            xss-sanitize
-version:         0.1.1
+version:         0.2.0
 license:         BSD3
 license-file:    LICENSE
 author:          Greg Weber <greg@gregweber.info>
 maintainer:      Greg Weber <greg@gregweber.info>
 synopsis:        sanitize untrusted HTML to prevent XSS attacks
-description:     sanitize untrusted HTML to prevent XSS attacks with Text.HTML.SanitizeXSS.sanitizeXSS. see README.md for more details
+description:     run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent XSS attacks. see READMe.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
 
 category:        Web
 stability:       Stable
