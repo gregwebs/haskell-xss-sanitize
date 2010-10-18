@@ -5,7 +5,7 @@ license-file:    LICENSE
 author:          Greg Weber <greg@gregweber.info>
 maintainer:      Greg Weber <greg@gregweber.info>
 synopsis:        sanitize untrusted HTML to prevent XSS attacks
-description:     run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent XSS attacks. see READMe.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+description:     run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent XSS attacks. see README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
 
 category:        Web
 stability:       Stable
