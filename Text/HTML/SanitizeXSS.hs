@@ -21,7 +21,10 @@ sanitizeXSS = renderTagsOptions renderOptions {
     safeTags m [] =
         concatMap go $ Map.toList m
       where
-        go (name, i) = replicate i $ TagClose name
+        go (name, i)
+            | noClosing name = []
+            | otherwise = replicate i $ TagClose name
+        noClosing = flip elem ["br", "img"]
     safeTags m (t@(TagClose name):tags)
         | safeTagName name =
             case Map.lookup name m of
