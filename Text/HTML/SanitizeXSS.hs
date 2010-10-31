@@ -9,20 +9,38 @@ import Network.URI ( parseURIReference, URI (..),
                      isAllowedInURI, escapeURIString, uriScheme )
 import Codec.Binary.UTF8.String ( encodeString )
 
+import qualified Data.Map as Map
+
 -- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
 sanitizeXSS :: String -> String
 sanitizeXSS = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } .  safeTags . parseTags
+  } .  safeTags Map.empty . parseTags
   where
-    safeTags :: [Tag String] -> [Tag String]
-    safeTags [] = []
-    safeTags (t@(TagClose name):tags) | safeTagName name = t:(safeTags tags)
-                                      | otherwise = safeTags tags
-    safeTags (TagOpen name attributes:tags)
-      | safeTagName name = TagOpen name (filter safeAttribute attributes) : safeTags tags
-      | otherwise = safeTags tags
-    safeTags (t:tags) = t:safeTags tags
+    safeTags :: Map.Map String Int -> [Tag String] -> [Tag String]
+    safeTags m [] =
+        concatMap go $ Map.toList m
+      where
+        go (name, i) = replicate i $ TagClose name
+    safeTags m (t@(TagClose name):tags)
+        | safeTagName name =
+            case Map.lookup name m of
+                Nothing -> safeTags m tags
+                Just i ->
+                    let m' = if i == 1
+                                then Map.delete name m
+                                else Map.insert name (i - 1) m
+                     in t : safeTags m' tags
+        | otherwise = safeTags m tags
+    safeTags m (TagOpen name attributes:tags)
+      | safeTagName name =
+        let m' =
+                case Map.lookup name m of
+                    Nothing -> Map.insert name 1 m
+                    Just i -> Map.insert name (i + 1) m
+         in TagOpen name (filter safeAttribute attributes) : safeTags m' tags
+      | otherwise = safeTags m tags
+    safeTags m (t:tags) = t:safeTags m tags
 
 safeTagName :: String -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
