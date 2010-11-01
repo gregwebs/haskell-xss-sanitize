@@ -1,6 +1,6 @@
 module Text.HTML.SanitizeXSS
     ( sanitizeXSS
-    , sanitizeBalanceXSS
+    , sanitizeBalance
     ) where
 
 import Text.HTML.TagSoup
@@ -14,8 +14,15 @@ import Codec.Binary.UTF8.String ( encodeString )
 
 import qualified Data.Map as Map
 
-sanitizeBalanceXSS :: String -> String
-sanitizeBalanceXSS = renderTagsOptions renderOptions {
+-- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+sanitizeXSS :: String -> String
+sanitizeXSS = renderTagsOptions renderOptions {
+    optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
+  } .  safeTags . parseTags
+
+-- same as sanitizeXSS but makes sure there are no lone closing tags. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+sanitizeBalance :: String -> String
+sanitizeBalance = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
   } . balance Map.empty . safeTags . parseTags
 
@@ -42,12 +49,6 @@ balance m (TagOpen name as : tags) =
             Nothing -> Map.insert name 1 m
             Just i -> Map.insert name (i + 1) m
 balance m (t:ts) = t : balance m ts
-
--- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
-sanitizeXSS :: String -> String
-sanitizeXSS = renderTagsOptions renderOptions {
-    optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } .  safeTags . parseTags
 
 safeTags :: [Tag String] -> [Tag String]
 safeTags [] = []
