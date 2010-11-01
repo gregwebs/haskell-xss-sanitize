@@ -1,4 +1,7 @@
-module Text.HTML.SanitizeXSS (sanitizeXSS) where
+module Text.HTML.SanitizeXSS
+    ( sanitizeXSS
+    , sanitizeBalanceXSS
+    ) where
 
 import Text.HTML.TagSoup
 
@@ -11,39 +14,50 @@ import Codec.Binary.UTF8.String ( encodeString )
 
 import qualified Data.Map as Map
 
+sanitizeBalanceXSS :: String -> String
+sanitizeBalanceXSS = renderTagsOptions renderOptions {
+    optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
+  } . balance Map.empty . safeTags . parseTags
+
+balance :: Map.Map String Int -> [Tag String] -> [Tag String]
+balance m [] =
+    concatMap go $ Map.toList m
+  where
+    go (name, i)
+        | noClosing name = []
+        | otherwise = replicate i $ TagClose name
+    noClosing = flip elem ["br", "img"]
+balance m (t@(TagClose name):tags) =
+    case Map.lookup name m of
+        Nothing -> TagOpen name [] : TagClose name : balance m tags
+        Just i ->
+            let m' = if i == 1
+                        then Map.delete name m
+                        else Map.insert name (i - 1) m
+             in t : balance m' tags
+balance m (TagOpen name as : tags) =
+    TagOpen name as : balance m' tags
+  where
+    m' = case Map.lookup name m of
+            Nothing -> Map.insert name 1 m
+            Just i -> Map.insert name (i + 1) m
+balance m (t:ts) = t : balance m ts
+
 -- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
 sanitizeXSS :: String -> String
 sanitizeXSS = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } .  safeTags Map.empty . parseTags
-  where
-    safeTags :: Map.Map String Int -> [Tag String] -> [Tag String]
-    safeTags m [] =
-        concatMap go $ Map.toList m
-      where
-        go (name, i)
-            | noClosing name = []
-            | otherwise = replicate i $ TagClose name
-        noClosing = flip elem ["br", "img"]
-    safeTags m (t@(TagClose name):tags)
-        | safeTagName name =
-            case Map.lookup name m of
-                Nothing -> TagOpen name [] : TagClose name : safeTags m tags
-                Just i ->
-                    let m' = if i == 1
-                                then Map.delete name m
-                                else Map.insert name (i - 1) m
-                     in t : safeTags m' tags
-        | otherwise = safeTags m tags
-    safeTags m (TagOpen name attributes:tags)
-      | safeTagName name =
-        let m' =
-                case Map.lookup name m of
-                    Nothing -> Map.insert name 1 m
-                    Just i -> Map.insert name (i + 1) m
-         in TagOpen name (filter safeAttribute attributes) : safeTags m' tags
-      | otherwise = safeTags m tags
-    safeTags m (t:tags) = t:safeTags m tags
+  } .  safeTags . parseTags
+
+safeTags :: [Tag String] -> [Tag String]
+safeTags [] = []
+safeTags (t@(TagClose name):tags)
+    | safeTagName name = t : safeTags tags
+    | otherwise = safeTags tags
+safeTags (TagOpen name attributes:tags)
+  | safeTagName name = TagOpen name (filter safeAttribute attributes) : safeTags tags
+  | otherwise = safeTags tags
+safeTags (t:tags) = t:safeTags tags
 
 safeTagName :: String -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
