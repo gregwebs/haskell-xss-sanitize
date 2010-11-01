@@ -1,8 +1,8 @@
 Summary
 =======
 provides 2 functions in the module Text.HTML.SanitizeXSS
-* sanitizeXSS - filters html to prevent XSS attacks.
-* sanitizeBalance - same as sanitizeXSS but makes sure there are no lone closing tags - this could prevent a user's html from messing up your page
+* sanitize - filters html to prevent XSS attacks.
+* sanitizeBalance - same as sanitize but makes sure there are no lone closing tags - this could prevent a user's html from messing up your page
 
 Use Case
 ========

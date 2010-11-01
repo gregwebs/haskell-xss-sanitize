@@ -1,6 +1,7 @@
 module Text.HTML.SanitizeXSS
-    ( sanitizeXSS
+    ( sanitize
     , sanitizeBalance
+    , sanitizeXSS
     ) where
 
 import Text.HTML.TagSoup
@@ -15,6 +16,9 @@ import Codec.Binary.UTF8.String ( encodeString )
 import qualified Data.Map as Map
 
 -- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+sanitize = sanitizeXSS
+
+-- alias of sanitize function
 sanitizeXSS :: String -> String
 sanitizeXSS = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
