@@ -28,7 +28,7 @@ sanitizeXSS = renderTagsOptions renderOptions {
     safeTags m (t@(TagClose name):tags)
         | safeTagName name =
             case Map.lookup name m of
-                Nothing -> safeTags m tags
+                Nothing -> TagOpen name [] : TagClose name : safeTags m tags
                 Just i ->
                     let m' = if i == 1
                                 then Map.delete name m
