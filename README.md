@@ -1,6 +1,7 @@
 Summary
 =======
 provides 2 functions in the module Text.HTML.SanitizeXSS
+
 * sanitize - filters html to prevent XSS attacks.
 * sanitizeBalance - same as sanitize but makes sure there are no lone closing tags - useful to prevent a user's html from messing up your page
 
@@ -31,7 +32,7 @@ Limitations
 
 Balancing - sanitizeBalance
 ---------------------------------
-The goal of this function is to prevent your html from breaking when unknown html is placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative aproach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. There is no guarantee for how a browser will display the HTML, so there is no guarantee that it will prevent your HTML from breaking. Other possible aproaches would be to run the HTML through a library like libxml2 which understands HTML or to first render the HTML in a hidden iframe or hidden div at the bottom of the page so that it is isolated, and then use javascript to insert it into the page where you want it.
+The goal of this function is to prevent your html from breaking when (unknown) html with unbalanced closing tags is placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative approach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. There is no guarantee for how a browser will display the HTML, so there is no guarantee that it will prevent your HTML from breaking. Other possible approaches would be to run the HTML through a library like libxml2 which understands HTML or to first render the HTML in a hidden iframe or hidden div at the bottom of the page so that it is isolated, and then use JavaScript to insert it into the page where you want it.
 
 TagSoup Parser
 --------------
