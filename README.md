@@ -2,19 +2,19 @@ Summary
 =======
 provides 2 functions in the module Text.HTML.SanitizeXSS
 * sanitize - filters html to prevent XSS attacks.
-* sanitizeBalance - same as sanitize but makes sure there are no lone closing tags - this could prevent a user's html from messing up your page
+* sanitizeBalance - same as sanitize but makes sure there are no lone closing tags - useful to prevent a user's html from messing up your page
 
 Use Case
 ========
 HTML from an untrusted source (user of a web application) should be ran through this library.
 If you trust the HTML (you wrote it), you do not need to use this.
-If you don't trust the html you probably also do not trust that the tags are balanced- so you should use sanitizeWithBalancing.
+If you don't trust the html you probably also do not trust that the tags are balanced and should use sanitizeWithBalancing.
 
 Detail
 ========
-This is not escaping! Escaping html does prevents XSS attacks. Strings should be html escaped to show up properly and to prevent XSS attacks. However, escaping will ruin the display of the html.
+This is not escaping! Escaping html does prevents XSS attacks. Strings (that aren't meant to be HTML) should be HTML escaped to show up properly and to prevent XSS attacks. However, escaping will ruin the display of the actual HTML.
 
-This function removes any tags or attributes that are not in its white-list. This may sound picky, but most html should make it through unchanged, making the process unnoticeable to the user but giving us safe html. 
+This function removes any HTML tags or attributes that are not in its white-list. This may sound picky, but most HTML should make it through unchanged, making the process unnoticeable to the user but giving us safe HTML. 
 
 Integration
 ===========
@@ -31,7 +31,7 @@ Limitations
 
 Balancing - sanitizeBalance
 ---------------------------------
-The goal of this function is to prevent your html from breaking when unknown html is placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative aproach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. This means there is still no guarantee what a browser will do with the html, so there is no guarantee that it will prevent you html from breaking. Other possible aproaches would be to run the html through a library like libxml2 which understands html or to first render the html in a hidden iframe or maybe a hidden div at the bottom of the page so that it is isolated, and then use javascript to insert it into the page where you want it.
+The goal of this function is to prevent your html from breaking when unknown html is placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative aproach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. There is no guarantee for how a browser will display the HTML, so there is no guarantee that it will prevent your HTML from breaking. Other possible aproaches would be to run the HTML through a library like libxml2 which understands HTML or to first render the HTML in a hidden iframe or hidden div at the bottom of the page so that it is isolated, and then use javascript to insert it into the page where you want it.
 
 TagSoup Parser
 --------------
