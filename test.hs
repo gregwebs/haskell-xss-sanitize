@@ -9,3 +9,5 @@ test actual expected = do
 main = do
   test (sanitizeBalance testHTML) " <a href=\"http://safe.com\">safe</a><a>anchor</a> <img />   <br /> <b>Unbalanced<div></div><img src=\"http://safe.com\"></b>"
   test (sanitize testHTML) " <a href=\"http://safe.com\">safe</a><a>anchor</a> <img />   <br /> <b>Unbalanced</div><img src=\"http://safe.com\">"
+  let testRelativeURI = "<a href=\"foo\">bar</a>"
+  test (sanitize testRelativeURI) testRelativeURI

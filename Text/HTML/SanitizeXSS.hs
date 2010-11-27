@@ -76,7 +76,8 @@ safeAttribute (name, value) = name `member` sanitaryAttributes &&
 sanitaryURI :: String -> Bool
 sanitaryURI u =
   case parseURIReference (escapeURI u) of
-     Just p  -> (init (map toLower $ uriScheme p)) `member` safeURISchemes
+     Just p  -> (null (uriScheme p)) ||
+                ((map toLower $ init $ uriScheme p) `member` safeURISchemes)
      Nothing -> False
 
 
