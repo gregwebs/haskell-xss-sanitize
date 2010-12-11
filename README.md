@@ -3,7 +3,7 @@ Summary
 provides 2 functions in the module Text.HTML.SanitizeXSS
 
 * sanitize - filters html to prevent XSS attacks.
-* sanitizeBalance - same as sanitize but makes sure there are no lone closing tags - useful to prevent a user's html from messing up your page
+* sanitizeBalance - same as sanitize but makes sure there are no lone opening/closing tags - useful to protect against a user's html messing up your page
 
 Use Case
 ========
@@ -13,7 +13,7 @@ If you don't trust the html you probably also do not trust that the tags are bal
 
 Detail
 ========
-This is not escaping! Escaping html does prevents XSS attacks. Strings (that aren't meant to be HTML) should be HTML escaped to show up properly and to prevent XSS attacks. However, escaping will ruin the display of the actual HTML.
+This is not escaping! Escaping html does prevent XSS attacks. Strings (that aren't meant to be HTML) should be HTML escaped to show up properly and to prevent XSS attacks. However, escaping will ruin the display of actual HTML.
 
 This function removes any HTML tags or attributes that are not in its white-list. This may sound picky, but most HTML should make it through unchanged, making the process unnoticeable to the user but giving us safe HTML. 
 
@@ -32,7 +32,7 @@ Limitations
 
 Balancing - sanitizeBalance
 ---------------------------------
-The goal of this function is to prevent your html from breaking when (unknown) html with unbalanced closing tags is placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative approach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. There is no guarantee for how a browser will display the HTML, so there is no guarantee that it will prevent your HTML from breaking. Other possible approaches would be to run the HTML through a library like libxml2 which understands HTML or to first render the HTML in a hidden iframe or hidden div at the bottom of the page so that it is isolated, and then use JavaScript to insert it into the page where you want it.
+The goal of this function is to prevent your html from breaking when (unknown) html with unbalanced tags are placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative approach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. There is no guarantee for how a browser will display invalid HTML, so there is no guarantee that this function will protect your HTML from being broken by a user's html. Other possible approaches would be to run the HTML through a library like libxml2 which understands HTML or to first render the HTML in a hidden iframe or hidden div at the bottom of the page so that it is isolated, and then use JavaScript to insert it into the page where you want it.
 
 TagSoup Parser
 --------------
@@ -46,17 +46,17 @@ In the third case, img and br tags will be output as a single self-closing tags.
 
 Where is the white list from?
 -----------------------------
-Ultimately this is where your security comes from, although I would tend to think that even a basic, incomplete white list would act as a strong deterrent.
+Ultimately this is where your security comes from. I would expect that a basic, incomplete white list would act as a strong deterrent, but this library strives for completeness.
 
-Version 0.1 of the white list is from Pandoc which is generally stricter than it needs to be but possibly allows unsafe protocols in links.
-
-Version >= 0.2 uses (the source code of html5lib)[http://code.google.com/p/html5lib/source/browse/python/html5lib/sanitizer.py]. as the source of the white list and my implementation reference. They reference (a wiki page containing a white list)[http://wiki.whatwg.org/wiki/Sanitization_rules], and hopefully they are careful of when they import into their code. Working with the maintainers of html5lib may make sense, but it doesn't make sense to merge the projects because sanitization is just one aspect of html5lib (They have a parser also).
+The (source code of html5lib)[http://code.google.com/p/html5lib/source/browse/python/html5lib/sanitizer.py] is the source of the white list and my implementation reference. They reference (a wiki page containing a white list)[http://wiki.whatwg.org/wiki/Sanitization_rules], and hopefully they are careful of when they import into their code. Working with the maintainers of html5lib may make sense, but it doesn't make sense to merge the projects because sanitization is just one aspect of html5lib (They have a parser also).
 
 If anyone knows of better sources or thinks a particular tag/attribute/value may be vulnerable, please let me know.
+(HTML Purifier)[http://htmlpurifier.org/live/smoketests/printDefinition.php] does have a more permissive and configurable (yet safe) white list if you are looking to add anything.
 
 attributes data and style
 -------------------------
-The href attribute is white listed, but its value must pass through a white list also. This is how the data and style attributes should work also. However, this was never implemented in Pandoc, and the html5lib code is a little complicated and relies on regular expressions that I don't understand. So for now these attributes are not on the white list.
+These attributes are not on the white list.
+The href attribute is white listed, but its value must pass through a white list also. This is how the data and style attributes could work also. However, this was never implemented in Pandoc, and the html5lib code is complicated and relies on regular expressions that I don't understand.
 
 svg and mathml
 --------------
