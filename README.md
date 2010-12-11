@@ -48,10 +48,10 @@ Where is the white list from?
 -----------------------------
 Ultimately this is where your security comes from. I would expect that a basic, incomplete white list would act as a strong deterrent, but this library strives for completeness.
 
-The (source code of html5lib)[http://code.google.com/p/html5lib/source/browse/python/html5lib/sanitizer.py] is the source of the white list and my implementation reference. They reference (a wiki page containing a white list)[http://wiki.whatwg.org/wiki/Sanitization_rules], and hopefully they are careful of when they import into their code. Working with the maintainers of html5lib may make sense, but it doesn't make sense to merge the projects because sanitization is just one aspect of html5lib (They have a parser also).
+The [source code of html5lib](http://code.google.com/p/html5lib/source/browse/python/html5lib/sanitizer.py) is the source of the white list and my implementation reference. They reference [a wiki page containing a white list](http://wiki.whatwg.org/wiki/Sanitization_rules), and hopefully they are careful of when they import into their code. Working with the maintainers of html5lib may make sense, but it doesn't make sense to merge the projects because sanitization is just one aspect of html5lib (They have a parser also).
 
 If anyone knows of better sources or thinks a particular tag/attribute/value may be vulnerable, please let me know.
-(HTML Purifier)[http://htmlpurifier.org/live/smoketests/printDefinition.php] does have a more permissive and configurable (yet safe) white list if you are looking to add anything.
+[HTML Purifier](http://htmlpurifier.org/live/smoketests/printDefinition.php) does have a more permissive and configurable (yet safe) white list if you are looking to add anything.
 
 attributes data and style
 -------------------------
