@@ -16,6 +16,7 @@ import Codec.Binary.UTF8.String ( encodeString )
 import qualified Data.Map as Map
 
 -- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+sanitize :: String -> String
 sanitize = sanitizeXSS
 
 -- alias of sanitize function
@@ -247,21 +248,4 @@ acceptable_css_keywords = ["auto", "aqua", "black", "block", "blue",
     "lime", "maroon", "medium", "none", "navy", "normal", "nowrap", "olive",
     "pointer", "purple", "red", "right", "solid", "silver", "teal", "top",
     "transparent", "underline", "white", "yellow"]
--}
-
-
--- I don't know where this is from!
--- The rest of pandoc's lists were smaller than the ones in html5lib
--- This one is bigger.
-{-
-pandoc_acceptable_protocols = [ "", "http:", "https:", "ftp:", "mailto:", "file:",
-             "telnet:", "gopher:", "aaa:", "aaas:", "acap:", "cap:", "cid:",
-             "crid:", "dav:", "dict:", "dns:", "fax:", "go:", "h323:", "im:",
-             "imap:", "ldap:", "mid:", "news:", "nfs:", "nntp:", "pop:",
-             "pres:", "sip:", "sips:", "snmp:", "tel:", "urn:", "wais:",
-             "xmpp:", "z39.50r:", "z39.50s:", "aim:", "callto:", "cvs:",
-             "ed2k:", "feed:", "fish:", "gg:", "irc:", "ircs:", "lastfm:",
-             "ldaps:", "magnet:", "mms:", "msnim:", "notes:", "rsync:",
-             "secondlife:", "skype:", "ssh:", "sftp:", "smb:", "sms:",
-             "snews:", "webcal:", "ymsgr:"]
 -}
