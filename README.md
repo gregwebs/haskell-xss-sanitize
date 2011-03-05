@@ -30,6 +30,10 @@ Michael Snoyman added the balanced tags functionality.
 Limitations
 ===========
 
+Lowercase
+---------
+All tag names and attribute names are converted to lower case as a matter of convenience. If you have a use case where this is undesirable let me know.
+
 Balancing - sanitizeBalance
 ---------------------------------
 The goal of this function is to prevent your html from breaking when (unknown) html with unbalanced tags are placed inside it. I would expect it to work very well in practice and don't see a downside to using it unless you have an alternative approach. However, this function does not at all guarantee valid html. In fact, it is likely that the result of balancing will still be invalid HTML. There is no guarantee for how a browser will display invalid HTML, so there is no guarantee that this function will protect your HTML from being broken by a user's html. Other possible approaches would be to run the HTML through a library like libxml2 which understands HTML or to first render the HTML in a hidden iframe or hidden div at the bottom of the page so that it is isolated, and then use JavaScript to insert it into the page where you want it.

@@ -2,6 +2,8 @@ module Text.HTML.SanitizeXSS
     ( sanitize
     , sanitizeBalance
     , sanitizeXSS
+    , filterTags
+    , safeTags
     ) where
 
 import Text.HTML.TagSoup
@@ -15,21 +17,30 @@ import Codec.Binary.UTF8.String ( encodeString )
 
 import qualified Data.Map as Map
 
+{-
+import Debug.Trace
+debug :: (Show a) => a -> a
+debug a = trace ("DEBUG: " ++ show a) a
+  -}
+
+
 -- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
 sanitize :: String -> String
 sanitize = sanitizeXSS
 
--- alias of sanitize function
+-- | alias of sanitize function
 sanitizeXSS :: String -> String
-sanitizeXSS = renderTagsOptions renderOptions {
-    optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } .  safeTags . parseTags
+sanitizeXSS = filterTags safeTags
 
--- same as sanitizeXSS but makes sure there are no lone closing tags. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+-- | same as sanitize but makes sure there are no lone closing tags. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
 sanitizeBalance :: String -> String
-sanitizeBalance = renderTagsOptions renderOptions {
+sanitizeBalance = filterTags (balance Map.empty . safeTags)
+
+-- | insert custom tag filtering. Don't forget to compose your filter with safeTags!
+filterTags :: ([Tag String] -> [Tag String]) -> String -> String
+filterTags f = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } . balance Map.empty . safeTags . parseTags
+  } .  f . canonicalizeTags . parseTags
 
 balance :: Map.Map String Int -> [Tag String] -> [Tag String]
 balance m [] =
@@ -55,6 +66,7 @@ balance m (TagOpen name as : tags) =
             Just i -> Map.insert name (i + 1) m
 balance m (t:ts) = t : balance m ts
 
+-- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
 safeTags :: [Tag String] -> [Tag String]
 safeTags [] = []
 safeTags (t@(TagClose name):tags)
