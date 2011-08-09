@@ -59,7 +59,7 @@ If anyone knows of better sources or thinks a particular tag/attribute/value may
 
 style attribute
 ----------------
-style attributes are now *parsed* with the css-text and autoparsec-text dependencies. They are then ran through a white list for properties and keywords. Whitespace is not preserved.
+style attributes are now *parsed* with the css-text and autoparsec-text dependencies. They are then ran through a white list for properties and keywords. Whitespace is not preserved. This code was again translated from sanitizer.py, but uses attopoarsec-text instead of regexes.
 
 data attributes
 -------------------------

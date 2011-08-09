@@ -21,6 +21,7 @@ import Network.URI ( parseURIReference, URI (..),
 import Codec.Binary.UTF8.String ( encodeString )
 
 import qualified Data.Map as Map
+import Data.Maybe (catMaybes)
 
 
 
@@ -74,7 +75,7 @@ safeTags (t@(TagClose name):tags)
     | otherwise = safeTags tags
 safeTags (TagOpen name attributes:tags)
   | safeTagName name = TagOpen name
-      (map sanitizeAttribute $ filter safeAttribute attributes) : safeTags tags
+      (catMaybes $ map sanitizeAttribute $ filter safeAttribute attributes) : safeTags tags
   | otherwise = safeTags tags
 safeTags (t:tags) = t:safeTags tags
 
@@ -85,9 +86,10 @@ safeAttribute :: (Text, Text) -> Bool
 safeAttribute (name, value) = name `member` sanitaryAttributes &&
   (name `notMember` uri_attributes || sanitaryURI value)
 
-sanitizeAttribute :: (Text, Text) -> (Text, Text)
-sanitizeAttribute ("style", value) = ("style", sanitizeCSS value)
-sanitizeAttribute attrs = attrs
+sanitizeAttribute :: (Text, Text) -> Maybe (Text, Text)
+sanitizeAttribute ("style", value) = 
+  let css = sanitizeCSS value in if T.null css then Nothing else Just ("style", css)
+sanitizeAttribute attr = Just attr
          
 
 -- | Returns @True@ if the specified URI is not a potential security risk.
@@ -174,7 +176,7 @@ acceptable_attributes = ["abbr", "accept", "accept-charset", "accesskey",
     "replace", "required", "rev", "rightspacing", "rows", "rowspan",
     "rules", "scope", "selected", "shape", "size", "span", "start",
     "step",
-    -- "style", TODO: allow this with further filtering
+    "style", -- gets further filtering
     "summary", "suppress", "tabindex", "target",
     "template", "title", "toppadding", "type", "unselectable", "usemap",
     "urn", "valign", "value", "variable", "volume", "vspace", "vrml",

@@ -1,5 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
-module Text.HTML.SanitizeXSS.Css (sanitizeCSS) where
+{-# LANGUAGE OverloadedStrings, CPP #-}
+module Text.HTML.SanitizeXSS.Css (
+  sanitizeCSS
+#ifdef TEST
+, allowedCssAttributeValue
+#endif
+  ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -8,23 +13,48 @@ import Data.Text.Lazy.Builder (toLazyText)
 import Data.Text.Lazy (toStrict)
 import Data.Set (member, fromList, Set)
 import Data.Char (isDigit)
-import Control.Applicative ((<|>))
+import Control.Applicative ((<|>), pure)
 import Text.CSS.Render (renderAttrs)
 import Text.CSS.Parse (parseAttrs)
+import Prelude hiding (takeWhile)
+
+-- import FileLocation (debug, debugM)
 
 
 -- this is a direct translation from sanitizer.py, except
 --   sanitizer.py filters out url(), but this is redundant
 sanitizeCSS :: Text -> Text
-sanitizeCSS css = toStrict . toLazyText . renderAttrs . filter isSanitaryAttr $ parseAttributes
+sanitizeCSS css = toStrict . toLazyText .
+    renderAttrs . filter isSanitaryAttr . filterUrl $ parseAttributes
   where
+    filterUrl :: [(Text,Text)] -> [(Text,Text)]
+    filterUrl = map filterUrlAttribute
+      where
+        filterUrlAttribute :: (Text, Text) -> (Text, Text)
+        filterUrlAttribute (prop,value) =
+            case parseOnly rejectUrl value of
+              Left _ -> (prop,value)
+              Right noUrl -> filterUrlAttribute (prop, noUrl)
+
+        rejectUrl = do
+          pre <- manyTill anyChar (string "url")
+          skipMany space
+          _<-char '('
+          skipWhile (/= ')')
+          _<-char ')'
+          rest <- takeText
+          return $ T.append (T.pack pre) rest
+
+
     parseAttributes = case parseAttrs css of
       Left _ -> []
       Right as -> as
 
+    isSanitaryAttr (_, "") = False
+    isSanitaryAttr ("",_)  = False
     isSanitaryAttr (prop, value)
       | prop `member` allowed_css_properties = True
-      | (T.takeWhile (/= '-') value) `member` allowed_css_unit_properties &&
+      | (T.takeWhile (/= '-') prop) `member` allowed_css_unit_properties &&
           all allowedCssAttributeValue (T.words value) = True
       | prop `member` allowed_svg_properties = True
       | otherwise = False
@@ -32,40 +62,45 @@ sanitizeCSS css = toStrict . toLazyText . renderAttrs . filter isSanitaryAttr $ 
     allowed_css_unit_properties :: Set Text
     allowed_css_unit_properties = fromList ["background","border","margin","padding"]
 
-    allowedCssAttributeValue :: Text -> Bool
-    allowedCssAttributeValue val = 
-      val `member` allowed_css_keywords ||
-        case parseOnly allowedCssAttributeParser val of
-            Left _ -> False
-            Right b -> b
-      where
-        allowedCssAttributeParser = do
-          hex <|> rgb <|> cssUnit
+allowedCssAttributeValue :: Text -> Bool
+allowedCssAttributeValue val = 
+  val `member` allowed_css_keywords ||
+    case parseOnly allowedCssAttributeParser val of
+        Left _ -> False
+        Right b -> b
+  where
+    allowedCssAttributeParser = do
+      rgb <|> hex <|> rgb <|> cssUnit
 
-        aToF = fromList "abcdef"
+    aToF = fromList "abcdef"
 
-        hex = do
-          _ <- char '#'
-          hx <- takeText
-          return $ T.all (\c -> isDigit c || (c `member` aToF)) hx
+    hex = do
+      _ <- char '#'
+      hx <- takeText
+      return $ T.all (\c -> isDigit c || (c `member` aToF)) hx
 
-        rgb = do
-          _<- string "rgb("
-          skip isDigit >> try (skipWhile isDigit) >> try (skip (== '%'))
-          skip (== ',')
-          try (skipWhile isDigit) >> try (skip (== '%'))
-          skip (== ',')
-          try (skipWhile isDigit) >> try (skip (== '%'))
-          skip (== ',')
-          skip (== ')')
-          return True
+    -- should have used sepBy (symbol ",")
+    rgb = do
+      _<- string "rgb("
+      skipMany1 digit >> skipOk (== '%')
+      skip (== ',')
+      skipMany digit >> skipOk (== '%')
+      skip (== ',')
+      skipMany digit >> skipOk (== '%')
+      skip (== ')')
+      return True
 
-        cssUnit = do
-          try $ skip isDigit >> skip isDigit
-          try $ skip (== '.')
-          try $ skip isDigit >> skip isDigit
-          unit <- takeText
-          return $ unit `member` allowed_css_attribute_value_units
+    cssUnit = do
+      skip isDigit
+      skipOk isDigit
+      skipOk (== '.')
+      skipOk isDigit >> skipOk isDigit
+      skipSpace
+      unit <- takeText
+      return $ T.null unit || unit `member` allowed_css_attribute_value_units
+
+skipOk :: (Char -> Bool) -> Parser ()
+skipOk p = skip p <|> pure ()
 
 allowed_css_attribute_value_units :: Set Text
 allowed_css_attribute_value_units = fromList

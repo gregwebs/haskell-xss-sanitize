@@ -21,7 +21,6 @@ library
                     , css-text >= 0.1 && < 0.2
                     , text                      >= 0.11     && < 0.12
                     , attoparsec-text           >= 0.8.5.1  && < 0.9
-                    , file-location
 
 
     exposed-modules: Text.HTML.SanitizeXSS
@@ -31,15 +30,16 @@ library
 test-suite test
     type: exitcode-stdio-1.0
     main-is: test/main.hs
+    cpp-options: -DTEST
     build-depends:   base  >= 4        && < 5, containers
-                   , xss-sanitize >= 0.3
                     , tagsoup >= 0.11
                     , utf8-string >= 0.3
                     , network >= 2
                     , css-text >= 0.1 && < 0.2
                     , text                      >= 0.11     && < 0.12
                     , attoparsec-text           >= 0.8.5.1  && < 0.9
-                    , file-location
+                    , hspec
+                    , HUnit >= 1.2
 
 
 source-repository head
