@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Text.HTML.SanitizeXSS
     ( sanitize
     , sanitizeBalance
@@ -6,10 +7,14 @@ module Text.HTML.SanitizeXSS
     , safeTags
     ) where
 
+import Text.HTML.SanitizeXSS.Css
+
 import Text.HTML.TagSoup
 
 import Data.Set (Set(), member, notMember, (\\), fromList)
 import Data.Char ( toLower )
+import Data.Text (Text)
+import qualified Data.Text as T
 
 import Network.URI ( parseURIReference, URI (..),
                      isAllowedInURI, escapeURIString, uriScheme )
@@ -17,32 +22,27 @@ import Codec.Binary.UTF8.String ( encodeString )
 
 import qualified Data.Map as Map
 
-{-
-import Debug.Trace
-debug :: (Show a) => a -> a
-debug a = trace ("DEBUG: " ++ show a) a
-  -}
 
 
 -- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
-sanitize :: String -> String
+sanitize :: Text -> Text
 sanitize = sanitizeXSS
 
 -- | alias of sanitize function
-sanitizeXSS :: String -> String
+sanitizeXSS :: Text -> Text
 sanitizeXSS = filterTags safeTags
 
 -- | same as sanitize but makes sure there are no lone closing tags. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
-sanitizeBalance :: String -> String
+sanitizeBalance :: Text -> Text
 sanitizeBalance = filterTags (balance Map.empty . safeTags)
 
 -- | insert custom tag filtering. Don't forget to compose your filter with safeTags!
-filterTags :: ([Tag String] -> [Tag String]) -> String -> String
+filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
     optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
   } .  f . canonicalizeTags . parseTags
 
-balance :: Map.Map String Int -> [Tag String] -> [Tag String]
+balance :: Map.Map Text Int -> [Tag Text] -> [Tag Text]
 balance m [] =
     concatMap go $ Map.toList m
   where
@@ -67,28 +67,33 @@ balance m (TagOpen name as : tags) =
 balance m (t:ts) = t : balance m ts
 
 -- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
-safeTags :: [Tag String] -> [Tag String]
+safeTags :: [Tag Text] -> [Tag Text]
 safeTags [] = []
 safeTags (t@(TagClose name):tags)
     | safeTagName name = t : safeTags tags
     | otherwise = safeTags tags
 safeTags (TagOpen name attributes:tags)
-  | safeTagName name = TagOpen name (filter safeAttribute attributes) : safeTags tags
+  | safeTagName name = TagOpen name
+      (map sanitizeAttribute $ filter safeAttribute attributes) : safeTags tags
   | otherwise = safeTags tags
 safeTags (t:tags) = t:safeTags tags
 
-safeTagName :: String -> Bool
+safeTagName :: Text -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
 
-safeAttribute :: (String, String) -> Bool
+safeAttribute :: (Text, Text) -> Bool
 safeAttribute (name, value) = name `member` sanitaryAttributes &&
-  (name `notMember` attrValIsUri || sanitaryURI value)
+  (name `notMember` uri_attributes || sanitaryURI value)
+
+sanitizeAttribute :: (Text, Text) -> (Text, Text)
+sanitizeAttribute ("style", value) = ("style", sanitizeCSS value)
+sanitizeAttribute attrs = attrs
          
 
 -- | Returns @True@ if the specified URI is not a potential security risk.
-sanitaryURI :: String -> Bool
+sanitaryURI :: Text -> Bool
 sanitaryURI u =
-  case parseURIReference (escapeURI u) of
+  case parseURIReference (escapeURI $ T.unpack u) of
      Just p  -> (null (uriScheme p)) ||
                 ((map toLower $ init $ uriScheme p) `member` safeURISchemes)
      Nothing -> False
@@ -102,19 +107,21 @@ escapeURI = escapeURIString isAllowedInURI . encodeString
 safeURISchemes :: Set String
 safeURISchemes = fromList acceptable_protocols
 
-sanitaryTags :: Set String
+sanitaryTags :: Set Text
 sanitaryTags = fromList (acceptable_elements ++ mathml_elements ++ svg_elements)
   \\ (fromList svg_allow_local_href) -- extra filtering not implemented
 
-sanitaryAttributes :: Set String
-sanitaryAttributes = fromList (acceptable_attributes ++ mathml_attributes ++ svg_attributes)
+sanitaryAttributes :: Set Text
+sanitaryAttributes = fromList (allowed_html_uri_attributes ++ acceptable_attributes ++ mathml_attributes ++ svg_attributes)
   \\ (fromList svg_attr_val_allows_ref) -- extra unescaping not implemented
 
-attrValIsUri :: Set String
-attrValIsUri = fromList ["href", "src", "cite", "action", "longdesc",
-    "xlink:href", "xml:base"]
+allowed_html_uri_attributes :: [Text]
+allowed_html_uri_attributes = ["href", "src", "cite", "action", "longdesc"]
 
-acceptable_elements :: [String]
+uri_attributes :: Set Text
+uri_attributes = fromList $ allowed_html_uri_attributes ++ ["xlink:href", "xml:base"]
+
+acceptable_elements :: [Text]
 acceptable_elements = ["a", "abbr", "acronym", "address", "area",
     "article", "aside", "audio", "b", "big", "blockquote", "br", "button",
     "canvas", "caption", "center", "cite", "code", "col", "colgroup",
@@ -129,7 +136,7 @@ acceptable_elements = ["a", "abbr", "acronym", "address", "area",
     "tbody", "td", "textarea", "time", "tfoot", "th", "thead", "tr", "tt",
     "u", "ul", "var", "video"]
   
-mathml_elements :: [String]
+mathml_elements :: [Text]
 mathml_elements = ["maction", "math", "merror", "mfrac", "mi",
     "mmultiscripts", "mn", "mo", "mover", "mpadded", "mphantom",
     "mprescripts", "mroot", "mrow", "mspace", "msqrt", "mstyle", "msub",
@@ -137,7 +144,7 @@ mathml_elements = ["maction", "math", "merror", "mfrac", "mi",
     "munderover", "none"]
 
 -- this should include altGlyph I think
-svg_elements :: [String]
+svg_elements :: [Text]
 svg_elements = ["a", "animate", "animateColor", "animateMotion",
     "animateTransform", "clipPath", "circle", "defs", "desc", "ellipse",
     "font-face", "font-face-name", "font-face-src", "g", "glyph", "hkern",
@@ -145,27 +152,27 @@ svg_elements = ["a", "animate", "animateColor", "animateMotion",
     "mpath", "path", "polygon", "polyline", "radialGradient", "rect",
     "set", "stop", "svg", "switch", "text", "title", "tspan", "use"]
   
-acceptable_attributes :: [String]
+acceptable_attributes :: [Text]
 acceptable_attributes = ["abbr", "accept", "accept-charset", "accesskey",
-    "action", "align", "alt", "autocomplete", "autofocus", "axis",
+    "align", "alt", "autocomplete", "autofocus", "axis",
     "background", "balance", "bgcolor", "bgproperties", "border",
     "bordercolor", "bordercolordark", "bordercolorlight", "bottompadding",
     "cellpadding", "cellspacing", "ch", "challenge", "char", "charoff",
-    "choff", "charset", "checked", "cite", "class", "clear", "color",
+    "choff", "charset", "checked", "class", "clear", "color",
     "cols", "colspan", "compact", "contenteditable", "controls", "coords",
     -- "data", TODO: allow this with further filtering
     "datafld", "datapagesize", "datasrc", "datetime", "default",
     "delay", "dir", "disabled", "draggable", "dynsrc", "enctype", "end",
     "face", "for", "form", "frame", "galleryimg", "gutter", "headers",
-    "height", "hidefocus", "hidden", "high", "href", "hreflang", "hspace",
+    "height", "hidefocus", "hidden", "high", "hreflang", "hspace",
     "icon", "id", "inputmode", "ismap", "keytype", "label", "leftspacing",
-    "lang", "list", "longdesc", "loop", "loopcount", "loopend",
+    "lang", "list", "loop", "loopcount", "loopend",
     "loopstart", "low", "lowsrc", "max", "maxlength", "media", "method",
     "min", "multiple", "name", "nohref", "noshade", "nowrap", "open",
     "optimum", "pattern", "ping", "point-size", "prompt", "pqg",
     "radiogroup", "readonly", "rel", "repeat-max", "repeat-min",
     "replace", "required", "rev", "rightspacing", "rows", "rowspan",
-    "rules", "scope", "selected", "shape", "size", "span", "src", "start",
+    "rules", "scope", "selected", "shape", "size", "span", "start",
     "step",
     -- "style", TODO: allow this with further filtering
     "summary", "suppress", "tabindex", "target",
@@ -179,7 +186,7 @@ acceptable_protocols = [ "ed2k", "ftp", "http", "https", "irc",
     "xmpp", "callto", "feed", "urn", "aim", "rsync", "tag",
     "ssh", "sftp", "rtsp", "afs" ]
 
-mathml_attributes :: [String]
+mathml_attributes :: [Text]
 mathml_attributes = ["actiontype", "align", "columnalign", "columnalign",
     "columnalign", "columnlines", "columnspacing", "columnspan", "depth",
     "display", "displaystyle", "equalcolumns", "equalrows", "fence",
@@ -190,7 +197,7 @@ mathml_attributes = ["actiontype", "align", "columnalign", "columnalign",
     "separator", "stretchy", "width", "width", "xlink:href", "xlink:show",
     "xlink:type", "xmlns", "xmlns:xlink"]
 
-svg_attributes :: [String]
+svg_attributes :: [Text]
 svg_attributes = ["accent-height", "accumulate", "additive", "alphabetic",
     "arabic-form", "ascent", "attributeName", "attributeType",
     "baseProfile", "bbox", "begin", "by", "calcMode", "cap-height",
@@ -221,43 +228,14 @@ svg_attributes = ["accent-height", "accumulate", "additive", "alphabetic",
     "y1", "y2", "zoomAndPan"]
 
 -- the values for these need to be escaped
-svg_attr_val_allows_ref :: [String]
+svg_attr_val_allows_ref :: [Text]
 svg_attr_val_allows_ref = ["clip-path", "color-profile", "cursor", "fill",
     "filter", "marker", "marker-start", "marker-mid", "marker-end",
     "mask", "stroke"]
 
-svg_allow_local_href :: [String]
+svg_allow_local_href :: [Text]
 svg_allow_local_href = ["altGlyph", "animate", "animateColor",
     "animateMotion", "animateTransform", "cursor", "feImage", "filter",
     "linearGradient", "pattern", "radialGradient", "textpath", "tref",
     "set", "use"]
 
-{- style value (css) filtering not implemented
- -
- - this is used for css filtering
-allowed_svg_properties = fromList acceptable_svg_properties
-acceptable_svg_properties = [ "fill", "fill-opacity", "fill-rule",
-    "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
-    "stroke-opacity"]
-
-
-allowed_css_properties = fromList acceptable_css_properties
-allowed_css_keywords = fromList acceptable_css_keywords
-acceptable_css_properties = ["azimuth", "background-color",
-    "border-bottom-color", "border-collapse", "border-color",
-    "border-left-color", "border-right-color", "border-top-color", "clear",
-    "color", "cursor", "direction", "display", "elevation", "float", "font",
-    "font-family", "font-size", "font-style", "font-variant", "font-weight",
-    "height", "letter-spacing", "line-height", "overflow", "pause",
-    "pause-after", "pause-before", "pitch", "pitch-range", "richness",
-    "speak", "speak-header", "speak-numeral", "speak-punctuation",
-    "speech-rate", "stress", "text-align", "text-decoration", "text-indent",
-    "unicode-bidi", "vertical-align", "voice-family", "volume",
-    "white-space", "width"]
-acceptable_css_keywords = ["auto", "aqua", "black", "block", "blue",
-    "bold", "both", "bottom", "brown", "center", "collapse", "dashed",
-    "dotted", "fuchsia", "gray", "green", "!important", "italic", "left",
-    "lime", "maroon", "medium", "none", "navy", "normal", "nowrap", "olive",
-    "pointer", "purple", "red", "right", "solid", "silver", "teal", "top",
-    "transparent", "underline", "white", "yellow"]
--}

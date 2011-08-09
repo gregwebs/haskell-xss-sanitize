@@ -24,7 +24,7 @@ It is recommended to integrate this so that it is automatically used whenever an
 Credit
 ===========
 Original code was taken from John MacFarlane's Pandoc (with permission), but modified to be faster and with parsing redone using TagSoup. html5lib is now being used as a reference (BSD style license).
-Michael Snoyman added the balanced tags functionality.
+Michael Snoyman added the balanced tags functionality and released css-text specifically to help with css parsing.
 
 
 Limitations
@@ -57,12 +57,16 @@ The [source code of html5lib](http://code.google.com/p/html5lib/source/browse/py
 If anyone knows of better sources or thinks a particular tag/attribute/value may be vulnerable, please let me know.
 [HTML Purifier](http://htmlpurifier.org/live/smoketests/printDefinition.php) does have a more permissive and configurable (yet safe) white list if you are looking to add anything.
 
-attributes data and style
+style attribute
+----------------
+style attributes are now *parsed* with the css-text and autoparsec-text dependencies. They are then ran through a white list for properties and keywords. Whitespace is not preserved.
+
+data attributes
 -------------------------
-These attributes are not on the white list.
-The href attribute is white listed, but its value must pass through a white list also. This is how the data and style attributes could work also. However, this was never implemented in Pandoc, and the html5lib code is complicated and relies on regular expressions that I don't understand.
+data attributes are not on the white list.
+The href attribute is white listed, but its value must pass through a white list also. This is how the data attributes could work also.
 
 svg and mathml
 --------------
-A mathml white list is fully implemented.
-There is a white list for svg elements and attributes. However, some elements are not included because they need further filtering (just like the data and style html attributes)
+A mathml white list is fully implemented. There is some support for svg styling. 
+There is a full white list for svg elements and attributes. However, some elements are not included because they need further filtering (just like the data attributes) and this has not been done yet.
