@@ -18,7 +18,7 @@ import Text.CSS.Parse (parseAttrs)
 sanitizeCSS :: Text -> Text
 sanitizeCSS css = toStrict . toLazyText . renderAttrs . filter isSanitaryAttr $ parseAttributes
   where
-    parseAttributes = case parseOnly parseAttrs css of
+    parseAttributes = case parseAttrs css of
       Left _ -> []
       Right as -> as
 
