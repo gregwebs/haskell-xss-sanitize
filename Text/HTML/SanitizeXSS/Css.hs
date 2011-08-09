@@ -63,7 +63,7 @@ sanitizeCSS css = toStrict . toLazyText .
     allowed_css_unit_properties = fromList ["background","border","margin","padding"]
 
 allowedCssAttributeValue :: Text -> Bool
-allowedCssAttributeValue val = 
+allowedCssAttributeValue val =
   val `member` allowed_css_keywords ||
     case parseOnly allowedCssAttributeParser val of
         Left _ -> False

@@ -87,7 +87,7 @@ safeAttribute (name, value) = name `member` sanitaryAttributes &&
   (name `notMember` uri_attributes || sanitaryURI value)
 
 sanitizeAttribute :: (Text, Text) -> Maybe (Text, Text)
-sanitizeAttribute ("style", value) = 
+sanitizeAttribute ("style", value) =
   let css = sanitizeCSS value in if T.null css then Nothing else Just ("style", css)
 sanitizeAttribute attr = Just attr
          
