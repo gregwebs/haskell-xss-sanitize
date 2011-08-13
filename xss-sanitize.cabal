@@ -15,7 +15,7 @@ homepage:        http://github.com/gregwebs/haskell-xss-sanitize
 
 library
     build-depends:  base == 4.*, containers
-                    , tagsoup >= 0.11
+                    , tagsoup >= 0.12.2
                     , utf8-string >= 0.3
                     , network >= 2
                     , css-text >= 0.1 && < 0.2
