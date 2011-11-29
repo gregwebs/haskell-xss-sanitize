@@ -12,7 +12,7 @@ import Data.Attoparsec.Text
 import Data.Text.Lazy.Builder (toLazyText)
 import Data.Text.Lazy (toStrict)
 import Data.Set (member, fromList, Set)
-import Data.Char (isDigit)
+import Data.Char (isDigit, isSpace)
 import Control.Applicative ((<|>), pure)
 import Text.CSS.Render (renderAttrs)
 import Text.CSS.Parse (parseAttrs)
@@ -38,7 +38,7 @@ sanitizeCSS css = toStrict . toLazyText .
 
         rejectUrl = do
           pre <- manyTill anyChar (string "url")
-          skipMany space
+          skipWhile isSpace
           _<-char '('
           skipWhile (/= ')')
           _<-char ')'
@@ -82,11 +82,11 @@ allowedCssAttributeValue val =
     -- should have used sepBy (symbol ",")
     rgb = do
       _<- string "rgb("
-      skipMany1 digit >> skipOk (== '%')
+      skipWhile1 isDigit >> skipOk (== '%')
       skip (== ',')
-      skipMany digit >> skipOk (== '%')
+      skipWhile1 isDigit >> skipOk (== '%')
       skip (== ',')
-      skipMany digit >> skipOk (== '%')
+      skipWhile1 isDigit >> skipOk (== '%')
       skip (== ')')
       return True
 
@@ -95,7 +95,7 @@ allowedCssAttributeValue val =
       skipOk isDigit
       skipOk (== '.')
       skipOk isDigit >> skipOk isDigit
-      skipSpace
+      skipWhile isSpace
       unit <- takeText
       return $ T.null unit || unit `member` allowed_css_attribute_value_units
 
@@ -138,3 +138,6 @@ allowed_svg_properties = fromList acceptable_svg_properties
     acceptable_svg_properties = [ "fill", "fill-opacity", "fill-rule",
         "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
         "stroke-opacity"]
+
+skipWhile1 :: (Char -> Bool) -> Parser ()
+skipWhile1 f = skip f >> skipWhile f
