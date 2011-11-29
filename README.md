@@ -66,7 +66,7 @@ html5lib's sanitizer.py is used as a reference implementation, and most of the c
 
 ### style attribute
 
-style attributes are now parsed with the css-text and autoparsec-text dependencies. They are then ran through a white list for properties and keywords. Whitespace is not preserved. This code was again translated from sanitizer.py, but uses attopoarsec-text instead of regexes. If you don't care about stripping css you can avoid an attoparsec-text dependending on the older < 0.3 version of this library.
+style attributes are now parsed with the css-text and autoparsec-text dependencies. They are then ran through a white list for properties and keywords. Whitespace is not preserved. This code was again translated from sanitizer.py, but uses attopoarsec instead of regexes. If you don't care about stripping css you can avoid an attoparsec dependending on the older < 0.3 version of this library.
 
 ### data attributes
 
