@@ -1,17 +1,17 @@
 name:            xss-sanitize
-version:         0.3.1
+version:         0.3.1.1
 license:         BSD3
 license-file:    LICENSE
 author:          Greg Weber <greg@gregweber.info>
 maintainer:      Greg Weber <greg@gregweber.info>
 synopsis:        sanitize untrusted HTML to prevent XSS attacks
-description:     run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent XSS attacks. see README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+description:     run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent XSS attacks. see README.md <http://github.com/yesodweb/haskell-xss-sanitize> for more details
 
 category:        Web
 stability:       Stable
 cabal-version:   >= 1.8 
 build-type:      Simple
-homepage:        http://github.com/gregwebs/haskell-xss-sanitize
+homepage:        http://github.com/yesodweb/haskell-xss-sanitize
 
 library
     build-depends:  base == 4.*, containers
@@ -44,4 +44,4 @@ test-suite test
 
 source-repository head
   type:     git 
-  location: http://github.com/gregwebs/haskell-xss-sanitize.git
+  location: http://github.com/yesodweb/haskell-xss-sanitize.git
