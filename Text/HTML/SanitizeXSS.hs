@@ -3,6 +3,7 @@ module Text.HTML.SanitizeXSS
     ( sanitize
     , sanitizeBalance
     , sanitizeXSS
+    , sanitizeAttribute
     , filterTags
     , safeTags
     ) where
@@ -75,7 +76,7 @@ safeTags (t@(TagClose name):tags)
     | otherwise = safeTags tags
 safeTags (TagOpen name attributes:tags)
   | safeTagName name = TagOpen name
-      (catMaybes $ map sanitizeAttribute $ filter safeAttribute attributes) : safeTags tags
+      (catMaybes $ map sanitizeAttribute attributes) : safeTags tags
   | otherwise = safeTags tags
 safeTags (t:tags) = t:safeTags tags
 
@@ -86,10 +87,13 @@ safeAttribute :: (Text, Text) -> Bool
 safeAttribute (name, value) = name `member` sanitaryAttributes &&
   (name `notMember` uri_attributes || sanitaryURI value)
 
+-- | low-level API if you have your own HTML parser. Used by safeTags.
 sanitizeAttribute :: (Text, Text) -> Maybe (Text, Text)
 sanitizeAttribute ("style", value) =
-  let css = sanitizeCSS value in if T.null css then Nothing else Just ("style", css)
-sanitizeAttribute attr = Just attr
+    let css = sanitizeCSS value
+    in  if T.null css then Nothing else Just ("style", css)
+sanitizeAttribute attr | safeAttribute attr = Just attr
+                       | otherwise = Nothing
          
 
 -- | Returns @True@ if the specified URI is not a potential security risk.
