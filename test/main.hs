@@ -2,10 +2,8 @@
 import Text.HTML.SanitizeXSS
 import Text.HTML.SanitizeXSS.Css
 import Data.Text (Text)
-import Data.Text as T
 
-import Test.Hspec.Monadic
-import Test.Hspec.HUnit ()
+import Test.Hspec
 import Test.HUnit (assert, (@?=), Assertion)
 
 test :: (Text -> Text) -> Text -> Text -> Assertion
@@ -13,9 +11,11 @@ test f actual expected = do
   let result = f actual
   result @?= expected
 
+sanitized :: Text -> Text -> Expectation
 sanitized = test sanitize
 
-main = hspecX $ do
+main :: IO ()
+main = hspec $ do
   describe "html sanitizing" $ do
     it "big test" $ do
       let testHTML = " <a href='http://safe.com'>safe</a><a href='unsafe://hack.com'>anchor</a> <img src='evil://evil.com' /> <unsafe></foo> <bar /> <br></br> <b>Unbalanced</div><img src='http://safe.com'>"
