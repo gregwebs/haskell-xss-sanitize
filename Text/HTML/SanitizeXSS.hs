@@ -12,7 +12,7 @@ import Text.HTML.SanitizeXSS.Css
 
 import Text.HTML.TagSoup
 
-import Data.Set (Set(), member, notMember, (\\), fromList)
+import Data.Set (Set(), member, notMember, (\\), fromList, fromAscList)
 import Data.Char ( toLower )
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -41,8 +41,11 @@ sanitizeBalance = filterTags (balance Map.empty . safeTags)
 -- | insert custom tag filtering. Don't forget to compose your filter with safeTags!
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
-    optMinimize = \x -> x `elem` ["br","img"] -- <img><img> converts to <img />, <a/> converts to <a></a>
+    optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
   } .  f . canonicalizeTags . parseTags
+
+voidElems :: Set T.Text
+voidElems = fromAscList $ T.words $ T.pack "area base br col command embed hr img input keygen link meta param source track wbr"
 
 balance :: Map.Map Text Int -> [Tag Text] -> [Tag Text]
 balance m [] =
@@ -51,7 +54,7 @@ balance m [] =
     go (name, i)
         | noClosing name = []
         | otherwise = replicate i $ TagClose name
-    noClosing = flip elem ["br", "img"]
+    noClosing = flip member voidElems
 balance m (t@(TagClose name):tags) =
     case Map.lookup name m of
         Nothing -> TagOpen name [] : TagClose name : balance m tags

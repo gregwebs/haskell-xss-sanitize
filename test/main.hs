@@ -14,6 +14,7 @@ test f actual expected = do
   result @?= expected
 
 sanitized = test sanitize
+sanitizedB = test sanitizeBalance
 
 main = hspecX $ do
   describe "html sanitizing" $ do
@@ -76,3 +77,11 @@ main = hspecX $ do
     it "allows valid units for grey-listed css" $ do
       let grey2Css = "<p style=\"background:1;border-foo:10px\"></p>"
       sanitized grey2Css grey2Css
+
+  describe "balancing" $ do
+    it "adds missing elements" $ do
+      sanitizedB "<a>foo" "<a>foo</a>"
+    it "doesn't add closing voids" $ do
+      sanitizedB "<img><hr/>" "<img><hr />"
+    it "removes closing voids" $ do
+      sanitizedB "<img></img>" "<img />"
