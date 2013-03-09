@@ -60,7 +60,7 @@ If anyone knows of better sources or thinks a particular tag/attribute/value may
 
 ### Where is the code from?
 
-Original code was taken from John MacFarlane's Pandoc (with permission), but modified to be faster and with parsing redone using TagSoup, and to use html5lib's white list.
+Original code was taken from John MacFarlane's Pandoc (with permission), but modified by Greg Weber to be faster and with parsing redone using TagSoup, and to use html5lib's white list.
 Michael Snoyman added the balanced tags functionality and released css-text specifically to help with css parsing.
 html5lib's sanitizer.py is used as a reference implementation, and most of the code should look the same. For css parsing, html5lib's regexes were translated to a parser.
 
