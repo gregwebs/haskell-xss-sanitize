@@ -12,6 +12,7 @@ stability:       Stable
 cabal-version:   >= 1.8 
 build-type:      Simple
 homepage:        http://github.com/yesodweb/haskell-xss-sanitize
+extra-source-files: README.md
 
 library
     build-depends:  base == 4.*, containers
