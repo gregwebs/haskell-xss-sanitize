@@ -1,11 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- | Sanatize HTML to prevent XSS attacks.
+--
+-- See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details.
 module Text.HTML.SanitizeXSS
-    ( sanitize
+    (
+    -- * Sanitize
+      sanitize
     , sanitizeBalance
     , sanitizeXSS
-    , sanitizeAttribute
+
+    -- * Custom filtering
     , filterTags
     , safeTags
+    , balanceTags
+
+    -- * Utilities
+    , sanitizeAttribute
     ) where
 
 import Text.HTML.SanitizeXSS.Css
@@ -25,8 +35,7 @@ import qualified Data.Map as Map
 import Data.Maybe (catMaybes)
 
 
-
--- | santize the html to prevent XSS attacks. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+-- | Sanitize HTML to prevent XSS attacks.  This is equivalent to @filterTags safeTags@.
 sanitize :: Text -> Text
 sanitize = sanitizeXSS
 
@@ -34,11 +43,17 @@ sanitize = sanitizeXSS
 sanitizeXSS :: Text -> Text
 sanitizeXSS = filterTags safeTags
 
--- | same as sanitize but makes sure there are no lone closing tags. See README.md <http://github.com/gregwebs/haskell-xss-sanitize> for more details
+-- | Sanitize HTML to prevent XSS attacks and also make sure the tags are balanced.
+--   This is equivalent to @filterTags (balanceTags . safeTags)@.
 sanitizeBalance :: Text -> Text
-sanitizeBalance = filterTags (balance Map.empty . safeTags)
+sanitizeBalance = filterTags (balanceTags . safeTags)
 
--- | insert custom tag filtering. Don't forget to compose your filter with safeTags!
+-- | Filter which makes sure the tags are balanced.  Use with 'filterTags' and 'safeTags' to create a custom filter.
+balanceTags :: [Tag Text] -> [Tag Text]
+balanceTags = balance Map.empty
+
+-- | Parse the given text to a list of tags, apply the given filtering function, and render back to HTML.
+--   You can insert your own custom filtering but make sure you compose your filtering function with 'safeTags'!
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
     optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
