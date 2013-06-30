@@ -1,7 +1,9 @@
 # Summary
 
 xss-sanitize allows you to accept html from untrusted sources by first filtering it through a white list.
-For example, this allows a web application to safely use a rich text editor or allow html in comments.
+The white list filtering is fairly comprehensive, including support for css in style attributes, but there are limitations enumerated below.
+
+Sanitizing allows a web application to safely use a rich text editor, allow html in comments, or otherwise display untrusted HTML.
 
 If you trust the HTML (you wrote it), you do not need to use this.
 If you don't trust the html you probably also do not trust that the tags are balanced and should use the sanitizeBalance function.
