@@ -1,5 +1,5 @@
 name:            xss-sanitize
-version:         0.3.4
+version:         0.3.4.1
 license:         BSD3
 license-file:    LICENSE
 author:          Greg Weber <greg@gregweber.info>
@@ -15,7 +15,7 @@ homepage:        http://github.com/yesodweb/haskell-xss-sanitize
 extra-source-files: README.md
 
 library
-    build-depends:  base == 4.*, containers
+    build-depends:    base == 4.*, containers
                     , tagsoup     >= 0.12.2   && < 1
                     , utf8-string >= 0.3      && < 1
                     , network     >= 2        && < 3
@@ -32,7 +32,7 @@ test-suite test
     type: exitcode-stdio-1.0
     main-is: test/main.hs
     cpp-options: -DTEST
-    build-depends:   base == 4.* , containers
+    build-depends:    base == 4.* , containers
                     , tagsoup     >= 0.12.2   && < 1
                     , utf8-string >= 0.3      && < 1
                     , network     >= 2        && < 3
