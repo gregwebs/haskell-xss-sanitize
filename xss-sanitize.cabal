@@ -20,7 +20,7 @@ library
                     , utf8-string >= 0.3      && < 1
                     , network     >= 2        && < 3
                     , css-text    >= 0.1.1    && < 0.2
-                    , text        >= 0.11     && < 1
+                    , text        >= 0.11     && < 2
                     , attoparsec  >= 0.10.0.3 && < 1
 
 
