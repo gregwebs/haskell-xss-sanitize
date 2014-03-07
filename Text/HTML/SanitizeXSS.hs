@@ -16,6 +16,7 @@ module Text.HTML.SanitizeXSS
 
     -- * Utilities
     , sanitizeAttribute
+    , sanitaryURI
     ) where
 
 import Text.HTML.SanitizeXSS.Css
