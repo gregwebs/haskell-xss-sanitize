@@ -1,5 +1,5 @@
 name:            xss-sanitize
-version:         0.3.5.3
+version:         0.3.5.4
 license:         BSD3
 license-file:    LICENSE
 author:          Greg Weber <greg@gregweber.info>

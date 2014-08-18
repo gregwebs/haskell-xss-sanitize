@@ -86,4 +86,4 @@ main = hspec $ do
     it "removes closing voids" $ do
       sanitizedB "<img></img>" "<img />"
     it "interleaved" $
-      sanitizedB "<i>hello<b>world</i>" "<i>hello<b>world</b></i>"
+      sanitizedB "<i>hello<b>world</i>" "<i>hello<b>world<i></i></b></i>"

@@ -32,7 +32,6 @@ import Network.URI ( parseURIReference, URI (..),
                      isAllowedInURI, escapeURIString, uriScheme )
 import Codec.Binary.UTF8.String ( encodeString )
 
-import qualified Data.Map as Map
 import Data.Maybe (catMaybes)
 
 
@@ -51,7 +50,7 @@ sanitizeBalance = filterTags (balanceTags . safeTags)
 
 -- | Filter which makes sure the tags are balanced.  Use with 'filterTags' and 'safeTags' to create a custom filter.
 balanceTags :: [Tag Text] -> [Tag Text]
-balanceTags = balance Map.empty
+balanceTags = balance []
 
 -- | Parse the given text to a list of tags, apply the given filtering function, and render back to HTML.
 --   You can insert your own custom filtering but make sure you compose your filtering function with 'safeTags'!
@@ -63,29 +62,16 @@ filterTags f = renderTagsOptions renderOptions {
 voidElems :: Set T.Text
 voidElems = fromAscList $ T.words $ T.pack "area base br col command embed hr img input keygen link meta param source track wbr"
 
-balance :: Map.Map Text Int -> [Tag Text] -> [Tag Text]
-balance m [] =
-    concatMap go $ Map.toList m
-  where
-    go (name, i)
-        | noClosing name = []
-        | otherwise = replicate i $ TagClose name
-    noClosing = flip member voidElems
-balance m (t@(TagClose name):tags) =
-    case Map.lookup name m of
-        Nothing -> TagOpen name [] : TagClose name : balance m tags
-        Just i ->
-            let m' = if i == 1
-                        then Map.delete name m
-                        else Map.insert name (i - 1) m
-             in t : balance m' tags
-balance m (TagOpen name as : tags) =
-    TagOpen name as : balance m' tags
-  where
-    m' = case Map.lookup name m of
-            Nothing -> Map.insert name 1 m
-            Just i -> Map.insert name (i + 1) m
-balance m (t:ts) = t : balance m ts
+balance :: [Text] -- ^ unclosed tags
+        -> [Tag Text] -> [Tag Text]
+balance unclosed [] = map TagClose $ filter (`notMember` voidElems) unclosed
+balance (x:xs) tags'@(TagClose name:tags)
+    | x == name = TagClose name : balance xs tags
+    | x `member` voidElems = balance xs tags'
+    | otherwise = TagOpen name [] : TagClose name : balance (x:xs) tags
+balance unclosed (TagOpen name as : tags) =
+    TagOpen name as : balance (name : unclosed) tags
+balance unclosed (t:ts) = t : balance unclosed ts
 
 -- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
 safeTags :: [Tag Text] -> [Tag Text]
