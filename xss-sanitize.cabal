@@ -21,7 +21,7 @@ flag network-uri
 library
     build-depends:    base == 4.*, containers
                     , tagsoup     >= 0.12.2   && < 1
-                    , utf8-string >= 0.3      && < 1
+                    , utf8-string >= 0.3      && < 1.1
                     , css-text    >= 0.1.1    && < 0.2
                     , text        >= 0.11     && < 2
                     , attoparsec  >= 0.10.0.3 && < 1
@@ -41,7 +41,7 @@ test-suite test
     cpp-options: -DTEST
     build-depends:    base == 4.* , containers
                     , tagsoup     >= 0.12.2   && < 1
-                    , utf8-string >= 0.3      && < 1
+                    , utf8-string >= 0.3      && < 1.1
                     , css-text    >= 0.1.1    && < 0.2
                     , text        >= 0.11     && < 2
                     , attoparsec  >= 0.10.0.3 && < 1
