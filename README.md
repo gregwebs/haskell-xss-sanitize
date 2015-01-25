@@ -55,7 +55,7 @@ In the third case, img and br tags will be output as a single self-closing tags.
 
 Ultimately this is where your security comes from. I would expect that a faulty white list would act as a strong deterrent, but this library strives for correctness.
 
-The [source code of html5lib](http://code.google.com/p/html5lib/source/browse/python/html5lib/sanitizer.py) is the source of the white list and my implementation reference. If you feel a tag is missing from the white list, check to see if it has been added there.
+The [source code of html5lib](https://github.com/html5lib/html5lib-python/blob/master/html5lib/sanitizer.py) is the source of the white list and my implementation reference. If you feel a tag is missing from the white list, check to see if it has been added there.
 
 If anyone knows of better sources or thinks a particular tag/attribute/value may be vulnerable, please let me know.
 [HTML Purifier](http://htmlpurifier.org/live/smoketests/printDefinition.php) does have a more permissive and configurable (yet safe) white list if you are looking to add anything.
