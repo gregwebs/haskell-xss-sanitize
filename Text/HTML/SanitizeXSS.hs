@@ -15,6 +15,7 @@ module Text.HTML.SanitizeXSS
     , balanceTags
 
     -- * Utilities
+    , safeTagName
     , sanitizeAttribute
     , sanitaryURI
     ) where
