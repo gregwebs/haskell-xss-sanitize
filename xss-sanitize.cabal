@@ -1,6 +1,6 @@
 name:            xss-sanitize
-version:         0.3.5.6
-license:         BSD3
+version:         0.3.5.7
+license:         BSD2
 license-file:    LICENSE
 author:          Greg Weber <greg@gregweber.info>
 maintainer:      Greg Weber <greg@gregweber.info>
