@@ -12,6 +12,7 @@ module Text.HTML.SanitizeXSS
     -- * Custom filtering
     , filterTags
     , safeTags
+    , mySafeTags
     , balanceTags
 
     -- * Utilities
@@ -76,15 +77,25 @@ balance unclosed (t:ts) = t : balance unclosed ts
 
 -- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
 safeTags :: [Tag Text] -> [Tag Text]
-safeTags [] = []
-safeTags (t@(TagClose name):tags)
+safeTags = mySafeTags safeTagName sanitizeAttribute
+
+-- | Filters out unsafe tags and attributes like 'safeTags', but uses
+-- custom functions for determining which tags and attributes are
+-- safe. This allows you to add or remove specific tags or attributes
+-- on the white list, or to use your own white list.
+-- @mySafeTags safeTagName sanitizeAttribute@ is equivalent to
+-- 'safeTags'.
+mySafeTags :: (Text -> Bool) -> ((Text, Text) -> Maybe (Text, Text)) ->
+              [Tag Text] -> [Tag Text]
+mySafeTags _ _ [] = []
+mySafeTags _ _ (t@(TagClose name):tags)
     | safeTagName name = t : safeTags tags
     | otherwise = safeTags tags
-safeTags (TagOpen name attributes:tags)
-  | safeTagName name = TagOpen name
-      (catMaybes $ map sanitizeAttribute attributes) : safeTags tags
+mySafeTags safeName sanitizeAttr (TagOpen name attributes:tags)
+  | safeName name = TagOpen name
+      (catMaybes $ map sanitizeAttr attributes) : safeTags tags
   | otherwise = safeTags tags
-safeTags (t:tags) = t:safeTags tags
+mySafeTags _ _ (t:tags) = t:safeTags tags
 
 safeTagName :: Text -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
