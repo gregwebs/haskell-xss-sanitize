@@ -11,9 +11,19 @@ test f actual expected = do
   let result = f actual
   result @?= expected
 
-sanitized :: Text -> Text -> Expectation
+sanitized, sanitizedB, sanitizedC :: Text -> Text -> Expectation
 sanitized = test sanitize
 sanitizedB = test sanitizeBalance
+sanitizedC = test sanitizeCustom
+
+sanitizeCustom :: Text -> Text
+sanitizeCustom = filterTags $ mySafeTags mySafeName mySanitizeAttr
+  where
+    mySafeName t = t `elem` myTags || safeTagName t
+    mySanitizeAttr (key, val) | key `elem` myAttrs = Just (key, val)
+    mySanitizeAttr x = sanitizeAttribute x
+    myTags = ["custtag"]
+    myAttrs = ["custattr"]
 
 main :: IO ()
 main = hspec $ do
@@ -87,3 +97,15 @@ main = hspec $ do
       sanitizedB "<img></img>" "<img />"
     it "interleaved" $
       sanitizedB "<i>hello<b>world</i>" "<i>hello<b>world<i></i></b></i>"
+
+  describe "customized white list" $ do
+    it "does not filter custom tags" $ do
+      let custtag = "<p><custtag></custtag></p>"
+      sanitizedC custtag custtag
+    it "filters non-custom tags" $ do
+      sanitizedC "<p><weird></weird></p>" "<p></p>"
+    it "does not filter custom attributes" $ do
+      let custattr = "<p custattr=\"foo\"></p>"
+      sanitizedC custattr custattr
+    it "filters non-custom attributes" $ do
+      sanitizedC "<p weird=\"bar\"></p>" "<p></p>"
