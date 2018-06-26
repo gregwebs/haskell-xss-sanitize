@@ -34,7 +34,7 @@ import Network.URI ( parseURIReference, URI (..),
                      isAllowedInURI, escapeURIString, uriScheme )
 import Codec.Binary.UTF8.String ( encodeString )
 
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 
 
 -- | Sanitize HTML to prevent XSS attacks.  This is equivalent to @filterTags safeTags@.
@@ -88,14 +88,14 @@ safeTags = mySafeTags safeTagName sanitizeAttribute
 mySafeTags :: (Text -> Bool) -> ((Text, Text) -> Maybe (Text, Text)) ->
               [Tag Text] -> [Tag Text]
 mySafeTags _ _ [] = []
-mySafeTags safeName _ (t@(TagClose name):tags)
-    | safeName name = t : safeTags tags
-    | otherwise = safeTags tags
+mySafeTags safeName sanitizeAttr (t@(TagClose name):tags)
+    | safeName name = t : mySafeTags safeName sanitizeAttr tags
+    | otherwise = mySafeTags safeName sanitizeAttr tags
 mySafeTags safeName sanitizeAttr (TagOpen name attributes:tags)
-  | safeName name = TagOpen name
-      (catMaybes $ map sanitizeAttr attributes) : safeTags tags
-  | otherwise = safeTags tags
-mySafeTags _ _ (t:tags) = t:safeTags tags
+  | safeName name = TagOpen name (mapMaybe sanitizeAttr attributes) :
+      mySafeTags safeName sanitizeAttr tags
+  | otherwise = mySafeTags safeName sanitizeAttr tags
+mySafeTags n a (t:tags) = t : mySafeTags n a tags
 
 safeTagName :: Text -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
