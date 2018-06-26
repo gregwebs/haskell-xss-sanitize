@@ -88,8 +88,8 @@ safeTags = mySafeTags safeTagName sanitizeAttribute
 mySafeTags :: (Text -> Bool) -> ((Text, Text) -> Maybe (Text, Text)) ->
               [Tag Text] -> [Tag Text]
 mySafeTags _ _ [] = []
-mySafeTags _ _ (t@(TagClose name):tags)
-    | safeTagName name = t : safeTags tags
+mySafeTags safeName _ (t@(TagClose name):tags)
+    | safeName name = t : safeTags tags
     | otherwise = safeTags tags
 mySafeTags safeName sanitizeAttr (TagOpen name attributes:tags)
   | safeName name = TagOpen name
