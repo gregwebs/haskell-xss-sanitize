@@ -19,6 +19,7 @@ flag network-uri
   default: True
 
 library
+    hs-source-dirs:   src
     build-depends:    base == 4.*, containers
                     , tagsoup     >= 0.12.2   && < 1
                     , utf8-string >= 0.3      && < 1.1
@@ -37,8 +38,11 @@ library
 
 test-suite test
     type: exitcode-stdio-1.0
-    main-is: test/main.hs
-    cpp-options: -DTEST
+    hs-source-dirs:   test, src
+    main-is:          main.hs
+    other-modules:    Text.HTML.SanitizeXSS
+                      Text.HTML.SanitizeXSS.Css
+    cpp-options:      -DTEST
     build-depends:    base == 4.* , containers
                     , tagsoup     >= 0.12.2   && < 1
                     , utf8-string >= 0.3      && < 1.1
