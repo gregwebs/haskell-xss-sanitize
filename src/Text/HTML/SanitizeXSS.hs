@@ -97,8 +97,7 @@ safeTagsCustom ::
                                           -- 'safeTagName'
   -> ((Text, Text) -> Maybe (Text, Text)) -- ^ Sanitize attributes,
                                           -- like 'sanitizeAttribute'
-  ->
-              [Tag Text] -> [Tag Text]
+  -> [Tag Text] -> [Tag Text]
 safeTagsCustom _ _ [] = []
 safeTagsCustom safeName sanitizeAttr (t@(TagClose name):tags)
     | safeName name = t : safeTagsCustom safeName sanitizeAttr tags
