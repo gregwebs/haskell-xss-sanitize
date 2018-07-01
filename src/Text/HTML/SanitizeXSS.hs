@@ -91,7 +91,7 @@ safeTags = safeTagsCustom safeTagName sanitizeAttribute
 -- @safeTagsCustom safeTagName sanitizeAttribute@ is equivalent to
 -- 'safeTags'.
 --
--- @since 0.3.5.8
+-- @since 0.3.6
 safeTagsCustom ::
      (Text -> Bool)                       -- ^ Select safe tags, like
                                           -- 'safeTagName'
