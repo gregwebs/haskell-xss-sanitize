@@ -54,8 +54,10 @@ sanitizeBalance = filterTags (balanceTags . safeTags)
 balanceTags :: [Tag Text] -> [Tag Text]
 balanceTags = balance []
 
--- | Parse the given text to a list of tags, apply the given filtering function, and render back to HTML.
---   You can insert your own custom filtering but make sure you compose your filtering function with 'safeTags'!
+-- | Parse the given text to a list of tags, apply the given filtering
+-- function, and render back to HTML. You can insert your own custom
+-- filtering, but make sure you compose your filtering function with
+-- 'safeTags' or 'safeTagsCustom'.
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
     optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
@@ -75,19 +77,27 @@ balance unclosed (TagOpen name as : tags) =
     TagOpen name as : balance (name : unclosed) tags
 balance unclosed (t:ts) = t : balance unclosed ts
 
--- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
+-- | Filters out unsafe tags and sanitizes attributes. Use with
+-- filterTags to create a custom filter.
 safeTags :: [Tag Text] -> [Tag Text]
 safeTags = safeTagsCustom safeTagName sanitizeAttribute
 
--- | Filters out unsafe tags and attributes like 'safeTags', but uses
--- custom functions for determining which tags and attributes are
--- safe. This allows you to add or remove specific tags or attributes
--- on the white list, or to use your own white list.
+-- | Filters out unsafe tags and sanitizes attributes, like
+-- 'safeTags', but uses custom functions for determining which tags
+-- are safe and for sanitizing attributes. This allows you to add or
+-- remove specific tags or attributes on the white list, or to use
+-- your own white list.
+--
 -- @safeTagsCustom safeTagName sanitizeAttribute@ is equivalent to
 -- 'safeTags'.
 --
 -- @since 0.3.5.8
-safeTagsCustom :: (Text -> Bool) -> ((Text, Text) -> Maybe (Text, Text)) ->
+safeTagsCustom ::
+     (Text -> Bool)                       -- ^ Select safe tags, like
+                                          -- 'safeTagName'
+  -> ((Text, Text) -> Maybe (Text, Text)) -- ^ Sanitize attributes,
+                                          -- like 'sanitizeAttribute'
+  ->
               [Tag Text] -> [Tag Text]
 safeTagsCustom _ _ [] = []
 safeTagsCustom safeName sanitizeAttr (t@(TagClose name):tags)
