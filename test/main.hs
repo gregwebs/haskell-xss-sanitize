@@ -17,7 +17,7 @@ sanitizedB = test sanitizeBalance
 sanitizedC = test sanitizeCustom
 
 sanitizeCustom :: Text -> Text
-sanitizeCustom = filterTags $ mySafeTags mySafeName mySanitizeAttr
+sanitizeCustom = filterTags $ safeTagsCustom mySafeName mySanitizeAttr
   where
     mySafeName t = t `elem` myTags || safeTagName t
     mySanitizeAttr (key, val) | key `elem` myAttrs = Just (key, val)

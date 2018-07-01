@@ -12,7 +12,7 @@ module Text.HTML.SanitizeXSS
     -- * Custom filtering
     , filterTags
     , safeTags
-    , mySafeTags
+    , safeTagsCustom
     , balanceTags
 
     -- * Utilities
@@ -77,25 +77,27 @@ balance unclosed (t:ts) = t : balance unclosed ts
 
 -- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
 safeTags :: [Tag Text] -> [Tag Text]
-safeTags = mySafeTags safeTagName sanitizeAttribute
+safeTags = safeTagsCustom safeTagName sanitizeAttribute
 
 -- | Filters out unsafe tags and attributes like 'safeTags', but uses
 -- custom functions for determining which tags and attributes are
 -- safe. This allows you to add or remove specific tags or attributes
 -- on the white list, or to use your own white list.
--- @mySafeTags safeTagName sanitizeAttribute@ is equivalent to
+-- @safeTagsCustom safeTagName sanitizeAttribute@ is equivalent to
 -- 'safeTags'.
-mySafeTags :: (Text -> Bool) -> ((Text, Text) -> Maybe (Text, Text)) ->
+--
+-- @since 0.3.5.8
+safeTagsCustom :: (Text -> Bool) -> ((Text, Text) -> Maybe (Text, Text)) ->
               [Tag Text] -> [Tag Text]
-mySafeTags _ _ [] = []
-mySafeTags safeName sanitizeAttr (t@(TagClose name):tags)
-    | safeName name = t : mySafeTags safeName sanitizeAttr tags
-    | otherwise = mySafeTags safeName sanitizeAttr tags
-mySafeTags safeName sanitizeAttr (TagOpen name attributes:tags)
+safeTagsCustom _ _ [] = []
+safeTagsCustom safeName sanitizeAttr (t@(TagClose name):tags)
+    | safeName name = t : safeTagsCustom safeName sanitizeAttr tags
+    | otherwise = safeTagsCustom safeName sanitizeAttr tags
+safeTagsCustom safeName sanitizeAttr (TagOpen name attributes:tags)
   | safeName name = TagOpen name (mapMaybe sanitizeAttr attributes) :
-      mySafeTags safeName sanitizeAttr tags
-  | otherwise = mySafeTags safeName sanitizeAttr tags
-mySafeTags n a (t:tags) = t : mySafeTags n a tags
+      safeTagsCustom safeName sanitizeAttr tags
+  | otherwise = safeTagsCustom safeName sanitizeAttr tags
+safeTagsCustom n a (t:tags) = t : safeTagsCustom n a tags
 
 safeTagName :: Text -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
