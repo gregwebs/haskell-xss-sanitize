@@ -1,0 +1,42 @@
+name:        xss-sanitize
+version:     0.3.5.8
+synopsis:    sanitize untrusted HTML to prevent XSS attacks
+description: run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent
+  XSS attacks. see README.md <http://github.com/yesodweb/haskell-xss-sanitize> for
+  more details
+category:    Web
+author:      Greg Weber <greg@gregweber.info>
+maintainer:  Michael Snoyman <michael@snoyman.com>
+license:     BSD2
+github:      yesodweb/haskell-xss-sanitize
+stability:   Stable
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+dependencies:
+- base >= 4.9.1 && < 5
+- containers
+- tagsoup >=0.12.2 && <1
+- utf8-string >=0.3 && <1.1
+- css-text >=0.1.1 && <0.2
+- text >=0.11 && <2
+- attoparsec >=0.10.0.3 && <1
+- network-uri >=2.6
+
+library:
+  source-dirs: src
+  exposed-modules:
+  - Text.HTML.SanitizeXSS
+
+tests:
+  test:
+    main: main.hs
+    source-dirs:
+    - test
+    - src
+    cpp-options: -DTEST
+    dependencies:
+    - hspec >=1.3
+    - HUnit >=1.2
