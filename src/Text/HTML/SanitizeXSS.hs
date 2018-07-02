@@ -12,6 +12,7 @@ module Text.HTML.SanitizeXSS
     -- * Custom filtering
     , filterTags
     , safeTags
+    , safeTagsCustom
     , balanceTags
 
     -- * Utilities
@@ -33,7 +34,7 @@ import Network.URI ( parseURIReference, URI (..),
                      isAllowedInURI, escapeURIString, uriScheme )
 import Codec.Binary.UTF8.String ( encodeString )
 
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 
 
 -- | Sanitize HTML to prevent XSS attacks.  This is equivalent to @filterTags safeTags@.
@@ -53,8 +54,10 @@ sanitizeBalance = filterTags (balanceTags . safeTags)
 balanceTags :: [Tag Text] -> [Tag Text]
 balanceTags = balance []
 
--- | Parse the given text to a list of tags, apply the given filtering function, and render back to HTML.
---   You can insert your own custom filtering but make sure you compose your filtering function with 'safeTags'!
+-- | Parse the given text to a list of tags, apply the given filtering
+-- function, and render back to HTML. You can insert your own custom
+-- filtering, but make sure you compose your filtering function with
+-- 'safeTags' or 'safeTagsCustom'.
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
     optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
@@ -74,17 +77,36 @@ balance unclosed (TagOpen name as : tags) =
     TagOpen name as : balance (name : unclosed) tags
 balance unclosed (t:ts) = t : balance unclosed ts
 
--- | Filters out any usafe tags and attributes. Use with filterTags to create a custom filter.
+-- | Filters out unsafe tags and sanitizes attributes. Use with
+-- filterTags to create a custom filter.
 safeTags :: [Tag Text] -> [Tag Text]
-safeTags [] = []
-safeTags (t@(TagClose name):tags)
-    | safeTagName name = t : safeTags tags
-    | otherwise = safeTags tags
-safeTags (TagOpen name attributes:tags)
-  | safeTagName name = TagOpen name
-      (catMaybes $ map sanitizeAttribute attributes) : safeTags tags
-  | otherwise = safeTags tags
-safeTags (t:tags) = t:safeTags tags
+safeTags = safeTagsCustom safeTagName sanitizeAttribute
+
+-- | Filters out unsafe tags and sanitizes attributes, like
+-- 'safeTags', but uses custom functions for determining which tags
+-- are safe and for sanitizing attributes. This allows you to add or
+-- remove specific tags or attributes on the white list, or to use
+-- your own white list.
+--
+-- @safeTagsCustom safeTagName sanitizeAttribute@ is equivalent to
+-- 'safeTags'.
+--
+-- @since 0.3.6
+safeTagsCustom ::
+     (Text -> Bool)                       -- ^ Select safe tags, like
+                                          -- 'safeTagName'
+  -> ((Text, Text) -> Maybe (Text, Text)) -- ^ Sanitize attributes,
+                                          -- like 'sanitizeAttribute'
+  -> [Tag Text] -> [Tag Text]
+safeTagsCustom _ _ [] = []
+safeTagsCustom safeName sanitizeAttr (t@(TagClose name):tags)
+    | safeName name = t : safeTagsCustom safeName sanitizeAttr tags
+    | otherwise = safeTagsCustom safeName sanitizeAttr tags
+safeTagsCustom safeName sanitizeAttr (TagOpen name attributes:tags)
+  | safeName name = TagOpen name (mapMaybe sanitizeAttr attributes) :
+      safeTagsCustom safeName sanitizeAttr tags
+  | otherwise = safeTagsCustom safeName sanitizeAttr tags
+safeTagsCustom n a (t:tags) = t : safeTagsCustom n a tags
 
 safeTagName :: Text -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
