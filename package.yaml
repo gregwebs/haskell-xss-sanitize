@@ -1,5 +1,5 @@
 name:        xss-sanitize
-version:     0.3.6
+version:     0.3.7
 synopsis:    sanitize untrusted HTML to prevent XSS attacks
 description: run untrusted HTML through Text.HTML.SanitizeXSS.sanitizeXSS to prevent
   XSS attacks. see README.md <http://github.com/yesodweb/haskell-xss-sanitize> for
