@@ -26,7 +26,6 @@ import Text.HTML.SanitizeXSS.Css
 import Text.HTML.TagSoup
 
 import Data.Set (Set(), member, notMember, (\\), fromList, fromAscList)
-import Data.Bool (bool)
 import Data.Char ( toLower )
 import Data.Text (Text)
 import qualified Data.Text as T
