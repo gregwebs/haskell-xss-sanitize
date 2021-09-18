@@ -43,12 +43,12 @@ sanitize = sanitizeXSS
 
 -- | alias of sanitize function
 sanitizeXSS :: Text -> Text
-sanitizeXSS = filterTags safeTags
+sanitizeXSS = filterTags (safeTags . clearTags)
 
 -- | Sanitize HTML to prevent XSS attacks and also make sure the tags are balanced.
 --   This is equivalent to @filterTags (balanceTags . safeTags)@.
 sanitizeBalance :: Text -> Text
-sanitizeBalance = filterTags (balanceTags . safeTags)
+sanitizeBalance = filterTags (balanceTags . safeTags . clearTags)
 
 -- | Filter which makes sure the tags are balanced.  Use with 'filterTags' and 'safeTags' to create a custom filter.
 balanceTags :: [Tag Text] -> [Tag Text]
@@ -108,12 +108,35 @@ safeTagsCustom safeName sanitizeAttr (TagOpen name attributes:tags)
   | otherwise = safeTagsCustom safeName sanitizeAttr tags
 safeTagsCustom n a (t:tags) = t : safeTagsCustom n a tags
 
+clearTags :: [Tag Text] -> [Tag Text]
+clearTags = clearTagsCustom clearableTagName
+
+clearTagsCustom :: (Text -> Bool) -> [Tag Text] -> [Tag Text]
+clearTagsCustom _ [] = []
+clearTagsCustom clearableName (tag@(TagOpen name _) : tags)
+    | clearableName name = tag : go 0 tags
+    | otherwise = tag : clearTagsCustom clearableName tags
+  where
+    go d (t@(TagOpen n _) : ts)
+        | n /= name = go d ts
+        | otherwise = go (d + 1) ts
+    go d (t@(TagClose n) : ts)
+        | n /= name = go d ts
+        | d == 0 = t : clearTagsCustom clearableName ts
+        | otherwise = go (d - 1) ts
+    go d (t : ts) = go d ts
+    go d [] = []
+clearTagsCustom clearableName (t : tags) = t : clearTagsCustom clearableName tags
+
 safeTagName :: Text -> Bool
 safeTagName tagname = tagname `member` sanitaryTags
 
 safeAttribute :: (Text, Text) -> Bool
 safeAttribute (name, value) = name `member` sanitaryAttributes &&
   (name `notMember` uri_attributes || sanitaryURI value)
+
+clearableTagName :: Text -> Bool
+clearableTagName tagname = tagname `member` clearableTags
 
 -- | low-level API if you have your own HTML parser. Used by safeTags.
 sanitizeAttribute :: (Text, Text) -> Maybe (Text, Text)
@@ -148,6 +171,9 @@ sanitaryTags = fromList (acceptable_elements ++ mathml_elements ++ svg_elements)
 sanitaryAttributes :: Set Text
 sanitaryAttributes = fromList (allowed_html_uri_attributes ++ acceptable_attributes ++ mathml_attributes ++ svg_attributes)
   \\ (fromList svg_attr_val_allows_ref) -- extra unescaping not implemented
+
+clearableTags :: Set Text
+clearableTags = fromList ["script", "style"]
 
 allowed_html_uri_attributes :: [Text]
 allowed_html_uri_attributes = ["href", "src", "cite", "action", "longdesc"]
@@ -272,4 +298,3 @@ svg_allow_local_href = ["altGlyph", "animate", "animateColor",
     "animateMotion", "animateTransform", "cursor", "feImage", "filter",
     "linearGradient", "pattern", "radialGradient", "textpath", "tref",
     "set", "use"]
-
