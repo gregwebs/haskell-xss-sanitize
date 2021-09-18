@@ -1,7 +1,6 @@
 # Summary
 
-[![Build Status](https://travis-ci.org/yesodweb/haskell-xss-sanitize.svg?branch=master)](https://travis-ci.org/yesodweb/haskell-xss-sanitize)
-[![Build status](https://ci.appveyor.com/api/projects/status/1i4xx9qi53r58tsh/branch/master?svg=true)](https://ci.appveyor.com/project/snoyberg/haskell-xss-sanitize/branch/master)
+[![Tests](https://github.com/yesodweb/haskell-xss-sanitize/actions/workflows/tests.yml/badge.svg)](https://github.com/yesodweb/haskell-xss-sanitize/actions/workflows/tests.yml)
 
 xss-sanitize allows you to accept html from untrusted sources by first filtering it through a white list.
 The white list filtering is fairly comprehensive, including support for css in style attributes, but there are limitations enumerated below.
