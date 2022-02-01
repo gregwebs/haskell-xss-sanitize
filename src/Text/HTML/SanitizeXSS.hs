@@ -60,8 +60,9 @@ balanceTags = balance []
 -- 'safeTags' or 'safeTagsCustom'.
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
-    optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } .  f . canonicalizeTags . parseTags
+    optEscape = id -- stops &"<> from being escaped which breaks existing HTML entities
+  , optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
+  } .  f . canonicalizeTags . parseTagsOptions (parseOptionsEntities (const Nothing))
 
 voidElems :: Set T.Text
 voidElems = fromAscList $ T.words $ T.pack "area base br col command embed hr img input keygen link meta param source track wbr"
