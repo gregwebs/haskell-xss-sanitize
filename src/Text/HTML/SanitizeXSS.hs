@@ -13,6 +13,8 @@ module Text.HTML.SanitizeXSS
     , filterTags
     , safeTags
     , safeTagsCustom
+    , clearTags
+    , clearTagsCustom
     , balanceTags
 
     -- * Utilities
@@ -57,7 +59,9 @@ balanceTags = balance []
 -- | Parse the given text to a list of tags, apply the given filtering
 -- function, and render back to HTML. You can insert your own custom
 -- filtering, but make sure you compose your filtering function with
--- 'safeTags' or 'safeTagsCustom'.
+-- 'safeTags' and 'clearTags' or 'safeTagsCustom' and 'clearTagsCustom'.
+--
+-- Note: You must apply 'clearTags' or 'clearTagsCustom' first
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
     optEscape = id -- stops &"<> from being escaped which breaks existing HTML entities
@@ -109,9 +113,17 @@ safeTagsCustom safeName sanitizeAttr (TagOpen name attributes:tags)
   | otherwise = safeTagsCustom safeName sanitizeAttr tags
 safeTagsCustom n a (t:tags) = t : safeTagsCustom n a tags
 
+-- | Directly removes tags even if they are not closed properly.
+-- This is importent to clear out both the script and iframe tag 
+-- in sequences like "<script><iframe></iframe>".
 clearTags :: [Tag Text] -> [Tag Text]
 clearTags = clearTagsCustom clearableTagName
 
+-- | Directly removes tags, like clearTags, but uses a custom
+-- function for determining which tags are safe.
+--
+-- @clearTagsCustom clearableTagName@ is equivalent to
+-- 'clearTags'.
 clearTagsCustom :: (Text -> Bool) -> [Tag Text] -> [Tag Text]
 clearTagsCustom _ [] = []
 clearTagsCustom clearableName (tag@(TagOpen name _) : tags)
