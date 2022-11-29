@@ -1,3 +1,7 @@
+# 0.3.7.1
+
+add max height and max width as valid style attributes
+
 # 0.3.7
 
 clear the contents of style and script tags instead of escaping them
