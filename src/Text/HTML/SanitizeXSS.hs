@@ -60,8 +60,6 @@ balanceTags = balance []
 -- function, and render back to HTML. You can insert your own custom
 -- filtering, but make sure you compose your filtering function with
 -- 'safeTags' and 'clearTags' or 'safeTagsCustom' and 'clearTagsCustom'.
---
--- Note: You must apply 'clearTags' or 'clearTagsCustom' first
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
     optEscape = id -- stops &"<> from being escaped which breaks existing HTML entities

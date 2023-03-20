@@ -1,3 +1,7 @@
+# 0.3.7.2
+
+Stops Tag Soup from escaping &"<> which breaks HTML entities
+
 # 0.3.7.1
 
 add max height and max width as valid style attributes
