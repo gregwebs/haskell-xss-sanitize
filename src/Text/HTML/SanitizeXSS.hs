@@ -13,6 +13,8 @@ module Text.HTML.SanitizeXSS
     , filterTags
     , safeTags
     , safeTagsCustom
+    , clearTags
+    , clearTagsCustom
     , balanceTags
 
     -- * Utilities
@@ -57,11 +59,12 @@ balanceTags = balance []
 -- | Parse the given text to a list of tags, apply the given filtering
 -- function, and render back to HTML. You can insert your own custom
 -- filtering, but make sure you compose your filtering function with
--- 'safeTags' or 'safeTagsCustom'.
+-- 'safeTags' and 'clearTags' or 'safeTagsCustom' and 'clearTagsCustom'.
 filterTags :: ([Tag Text] -> [Tag Text]) -> Text -> Text
 filterTags f = renderTagsOptions renderOptions {
-    optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
-  } .  f . canonicalizeTags . parseTags
+    optEscape = id -- stops &"<> from being escaped which breaks existing HTML entities
+  , optMinimize = \x -> x `member` voidElems -- <img><img> converts to <img />, <a/> converts to <a></a>
+  } .  f . canonicalizeTags . parseTagsOptions (parseOptionsEntities (const Nothing))
 
 voidElems :: Set T.Text
 voidElems = fromAscList $ T.words $ T.pack "area base br col command embed hr img input keygen link meta param source track wbr"
@@ -108,9 +111,17 @@ safeTagsCustom safeName sanitizeAttr (TagOpen name attributes:tags)
   | otherwise = safeTagsCustom safeName sanitizeAttr tags
 safeTagsCustom n a (t:tags) = t : safeTagsCustom n a tags
 
+-- | Directly removes tags even if they are not closed properly.
+-- This is importent to clear out both the script and iframe tag 
+-- in sequences like "<script><iframe></iframe>".
 clearTags :: [Tag Text] -> [Tag Text]
 clearTags = clearTagsCustom clearableTagName
 
+-- | Directly removes tags, like clearTags, but uses a custom
+-- function for determining which tags are safe.
+--
+-- @clearTagsCustom clearableTagName@ is equivalent to
+-- 'clearTags'.
 clearTagsCustom :: (Text -> Bool) -> [Tag Text] -> [Tag Text]
 clearTagsCustom _ [] = []
 clearTagsCustom clearableName (tag@(TagOpen name _) : tags)

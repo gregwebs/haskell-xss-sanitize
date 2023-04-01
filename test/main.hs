@@ -27,6 +27,9 @@ sanitizeCustom = filterTags $ safeTagsCustom mySafeName mySanitizeAttr
 
 main :: IO ()
 main = hspec $ do
+  describe "Sanitized HTML is not changed" $ do
+    it "HTML entities should not be escaped" $ do
+      test (filterTags safeTags) "text&nbsp;more text" "text&nbsp;more text"
   describe "html sanitizing" $ do
     it "big test" $ do
       let testHTML = " <a href='http://safe.com'>safe</a><a href='unsafe://hack.com'>anchor</a> <img src='evil://evil.com' /> <unsafe></foo> <bar /> <br></br> <b>Unbalanced</div><img src='http://safe.com'>"
