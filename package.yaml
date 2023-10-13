@@ -21,7 +21,7 @@ dependencies:
 - tagsoup >=0.12.2 && <1
 - utf8-string >=0.3 && <1.1
 - css-text >=0.1.1 && <0.2
-- text >=0.11 && < 2.1
+- text >=0.11 && < 2.2
 - attoparsec >=0.10.0.3 && <1
 - network-uri >=2.6
 
